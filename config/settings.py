@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "imagekit",
     "crispy_forms",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,8 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = "config.asgi.application"
+
 WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
@@ -97,6 +100,16 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+# 채널 레이어 설정
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # drf-yasg 설정
 SWAGGER_SETTINGS = {
