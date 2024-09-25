@@ -1,9 +1,11 @@
+from django.contrib.auth import login, logout, authenticate
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .serializers import UserSerializer, ProfileSerializer
+from .serializers import UserSerializer, LoginSerializer, ProfileSerializer
 
 User = get_user_model()
 
@@ -17,6 +19,51 @@ class SignUpView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+
+class LoginView(APIView):
+    """
+    로그인 API View
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data["username"]
+            password = serializer.validated_data["password"]
+            user = authenticate(username=username, password=password)
+            if user:
+                if user.is_active:
+                    login(request, user)
+                    return Response(
+                        {"detail": "로그인 성공"}, status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        {"detail": "계정이 비활성화되었습니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            else:
+                return Response(
+                    {"detail": "잘못된 로그인 정보입니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    """
+    로그아웃 API View
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
 
 
 class ProfileDetailView(generics.RetrieveAPIView):
@@ -49,7 +96,7 @@ class UserDeactivateView(APIView):
     계정 비활성화 API view
     user.is_active = False로 계정 로그인 불가
     이후 계정을 다시 활성화 가능
-    로그인, 로그아웃 뷰 개발 시 비활성화 유저 로그아웃 로직 추가 필요
+    비활성화 유저 로그아웃 처리
     """
 
     permission_classes = [IsAuthenticated]
@@ -58,8 +105,10 @@ class UserDeactivateView(APIView):
         user = request.user
         user.is_active = False
         user.save()
+        logout(request)
         return Response(
-            {"detail": "귀하의 계정이 비활성화되었습니다."}, status=status.HTTP_200_OK
+            {"detail": "귀하의 계정이 비활성화되었으며 로그아웃되었습니다."},
+            status=status.HTTP_200_OK,
         )
 
 
