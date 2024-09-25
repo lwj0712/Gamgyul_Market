@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Rooms</title>
+</head>
+<body>
+    <h1>채팅</h1>
+
+    <!-- 채팅방 생성 버튼 -->
+    <a href="{% url 'create_room' %}">새로운 대화 시작하기</a>
+
+    <ul>
+        {% for room in chat_rooms %}
+            <li><a href="{% url 'room' room.name %}">{{ room.name }}</a></li>
+        {% empty %}
+            <li>현재 생성된 채팅방이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
