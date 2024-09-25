@@ -121,6 +121,8 @@ SWAGGER_SETTINGS = {
     }
 }
 
+AUTH_USER_MODEL = "accounts.User"
+
 LANGUAGE_CODE = "ko-kr"
 
 TIME_ZONE = "Asia/Seoul"
