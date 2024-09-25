@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from django.urls import reverse_lazy
 
 # .env 파일 로드
 load_dotenv()
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "imagekit",
     "crispy_forms",
+    "taggit",
 ]
 
 MIDDLEWARE = [
@@ -187,6 +189,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
+
+LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
+ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
+ACCOUNT_LOGOUT_ON_GET = True
 
 # 구글 소셜 계정 설정
 SOCIALACCOUNT_PROVIDERS = {
