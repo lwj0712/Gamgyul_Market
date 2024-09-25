@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title새로운 대화 시작하기</title>
+</head>
+<body>
+    <h1>새로운 대화 시작하기</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="room_name">방 이름:</label>
+        <input id="room_name" name="room_name" type="text" required>
+        <button type="submit">확인</button>
+    </form>
+</body>
+</html>
