@@ -201,10 +201,6 @@ LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
 ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
 ACCOUNT_LOGOUT_ON_GET = True
 
-LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
-ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
-ACCOUNT_LOGOUT_ON_GET = True
-
 # 구글 소셜 계정 설정
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
