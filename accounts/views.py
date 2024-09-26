@@ -12,6 +12,7 @@ from .serializers import (
     LoginSerializer,
     ProfileSerializer,
     PasswordChangeSerializer,
+    ProfileUpdateSerializer,
 )
 
 User = get_user_model()
@@ -140,12 +141,30 @@ class ProfileUpdateView(generics.UpdateAPIView):
     프로필 수정 API view
     """
 
-    queryset = User.objects.all()
-    serializer_class = ProfileSerializer
+    serializer_class = ProfileUpdateSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        # patch, put 요청 모두 처리
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        # serializer의 save() 메서드를 호출하여 데이터베이스에 변경사항을 저장
+        self.perform_update(serializer)
+
+        # 관련 객체들을 미리 가져왔을 때 쓰는 캐시, update되면 cache 비움(최적화)
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
 
 
 class UserDeactivateView(APIView):
@@ -196,7 +215,6 @@ class UserDeleteView(APIView):
         )
 
 
-# 추가 기능 구현
 class PasswordChangeView(generics.UpdateAPIView):
     """
     비밀번호 변경 api view

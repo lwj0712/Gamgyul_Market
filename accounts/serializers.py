@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from allauth.socialaccount.models import SocialAccount
+
 
 # from insta.models import Comment, Post
 from market.models import Product
@@ -168,3 +170,42 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True).data
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    프로필 업데이트 serializer
+    nickname, bio, email, profile_image 변경
+    """
+
+    class Meta:
+        model = User
+        fields = ["nickname", "bio", "email", "profile_image"]
+        extra_kwargs = {
+            "email": {"required": False},
+            "profile_image": {"required": False},
+        }
+
+    def validate_email(self, value):
+        # 현재 사용자르 제외한 유저들의 email 체크
+        if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
+            raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
+        return value
+
+    def update(self, instance, validated_data):
+        # 업데이트된 이미지 파일 받아옴
+        profile_image = validated_data.get("profile_image")
+        if profile_image and isinstance(profile_image, InMemoryUploadedFile):
+            if instance.profile_image:
+                instance.profile_image.delete(
+                    save=False
+                )  # 기존 프로필이 있다면 제거 후 생성
+            instance.profile_image = profile_image
+
+        # Update other fields
+        instance.nickname = validated_data.get("nickname", instance.nickname)
+        instance.bio = validated_data.get("bio", instance.bio)
+        instance.email = validated_data.get("email", instance.email)
+
+        instance.save()
+        return instance
