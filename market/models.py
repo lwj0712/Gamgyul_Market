@@ -5,7 +5,7 @@ from django.conf import settings
 # Product Model
 class Product(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
     )  # user_id
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -38,7 +38,7 @@ class ProductImage(models.Model):
 # Review Model
 class Review(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
     )  # user_id
     product = models.ForeignKey(
         Product, related_name="reviews", on_delete=models.CASCADE
