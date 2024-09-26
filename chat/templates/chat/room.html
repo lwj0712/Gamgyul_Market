@@ -12,7 +12,12 @@
     </div>
     <input id="chat-message-input" type="text" size="50" placeholder="메시지를 입력하세요.">
     <button id="chat-message-submit">전송</button>
-    <a href="{% url 'chatroom_list' %}">목록으로</a>
+    <a href="{% url 'chat:chatroom_list' %}">목록</a>
+
+    <form method="POST" action="{% url 'chat:leave_room' room.name %}">
+        {% csrf_token %}
+        <button type="submit">채팅방 나가기</button>
+    </form>
     
     <script>
         const roomName = "{{ room.name }}";

@@ -9,14 +9,12 @@
     <h1>채팅</h1>
 
     <!-- 채팅방 생성 버튼 -->
-    <a href="{% url 'create_room' %}">새로운 대화 시작하기</a>
+    <a href="{% url 'chat:create_room' %}">새로운 대화 시작하기</a>
 
     <ul>
         {% for participant in chat_rooms %}
             <li>
-                <a href="{% url 'room' participant.room.name %}">
-                    {{ participant.room.name }}
-                </a>
+                <a href="{% url 'chat:room' participant.room.name %}">{{ participant.room.name }}</a>
             </li>
         {% empty %}
             <li>대화 중인 채팅방이 없습니다.</li>
