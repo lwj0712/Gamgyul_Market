@@ -18,4 +18,7 @@ urlpatterns = [
     path(
         "google/callback/", views.GoogleCallbackView.as_view(), name="google_callback"
     ),
+    path(
+        "change-password/", views.PasswordChangeView.as_view(), name="change_password"
+    ),
 ]

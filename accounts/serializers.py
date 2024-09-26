@@ -22,14 +22,14 @@ class SocialAccountSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """
     회원가입 serializer
-    password2: 비밀번호 확인 메서드 후 회원 정보에서 제거
+    password2 필드 제거: 비밀번호 확인은 프론트엔드에서 처리
+    유효성 검사 로직 제거
     소셜 계정 정보 추가
     """
 
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password]
     )
-    password2 = serializers.CharField(write_only=True, required=True)
     social_accounts = SocialAccountSerializer(many=True, read_only=True)
 
     class Meta:
@@ -46,15 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
             "temperature": {"read_only": True},
         }
 
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password": "비밀번호가 일치하지 않습니다."}
-            )
-        return attrs
-
     def create(self, validated_data):
-        validated_data.pop("password2")
         user = User.objects.create_user(**validated_data)
         return user
 
@@ -75,6 +67,30 @@ class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """
+    비밀번호 변경 serializer
+    이전 비밀번호가 올바른 지 유효성 검사
+    통과 시 new_password로 변경해서 저장
+    """
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("이전 비밀번호가 올바르지 않습니다.")
+        return value
+
+    def save(self, **kwargs):
+        password = self.validated_data["new_password"]
+        user = self.context["request"].user
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class FollowSerializer(serializers.ModelSerializer):

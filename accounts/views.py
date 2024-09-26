@@ -7,7 +7,12 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
-from .serializers import UserSerializer, LoginSerializer, ProfileSerializer
+from .serializers import (
+    UserSerializer,
+    LoginSerializer,
+    ProfileSerializer,
+    PasswordChangeSerializer,
+)
 
 User = get_user_model()
 
@@ -102,7 +107,7 @@ class GoogleCallbackView(APIView):
         if code:
             return Response({"code": code}, status=status.HTTP_200_OK)
         return Response(
-            {"error": "Code not found."}, status=status.HTTP_400_BAD_REQUEST
+            {"error": "코드를 찾을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -187,5 +192,27 @@ class UserDeleteView(APIView):
         user.delete()
         return Response(
             {"detail": "귀하의 계정이 완전히 삭제되었습니다."},
+            status=status.HTTP_200_OK,
+        )
+
+
+# 추가 기능 구현
+class PasswordChangeView(generics.UpdateAPIView):
+    """
+    비밀번호 변경 api view
+    serializer 유효성 검사 후 저장
+    저장 후 로그아웃 기능
+    """
+
+    serializer_class = PasswordChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        logout(request)
+        return Response(
+            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
             status=status.HTTP_200_OK,
         )
