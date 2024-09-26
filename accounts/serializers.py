@@ -1,7 +1,10 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
 from allauth.socialaccount.models import SocialAccount
 
 
@@ -190,6 +193,29 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         # 현재 사용자르 제외한 유저들의 email 체크
         if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
             raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
+        return value
+
+    def validate_profile_image(self, value):
+        if value:
+            # 파일 크기 제한
+            if value.size > 2 * 1024 * 1024:
+                raise ValidationError("이미지 파일 크기는 2MB를 초과할 수 없습니다.")
+
+            # 이미지 크기 제한
+            width, height = get_image_dimensions(value)
+            if width > 1000 or height > 1000:
+                raise ValidationError(
+                    "이미지 크기는 1000x1000 픽셀을 초과할 수 없습니다."
+                )
+
+            # 파일 확장자 제한
+            allowed_extensions = [".jpg", ".jpeg", ".png", ".gif"]
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in allowed_extensions:
+                raise ValidationError(
+                    "허용되는 이미지 형식은 JPG, JPEG, PNG, GIF입니다."
+                )
+
         return value
 
     def update(self, instance, validated_data):
