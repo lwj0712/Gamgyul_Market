@@ -1,5 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from .models import Message, ChatRoom
+from channels.db import database_sync_to_async
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -23,14 +25,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
 
-        # 그룹에 메시지 전송
+        user = self.scope["user"]
+        room = await self.get_room(self.room_name)
+
+        # 메시지 저장
+        await self.save_message(room, user, message)
+
         await self.channel_layer.group_send(
-            self.room_group_name, {"type": "chat_message", "message": message}
+            self.room_group_name,
+            {
+                "type": "chat_message",
+                "message": message,
+                "user": user.username,
+            },
         )
 
     # 그룹에서 메세지 받은 뒤 실행
     async def chat_message(self, event):
         message = event["message"]
+        user = event["user"]
 
-        # 클라이언트에게 메시지 다시 전송
-        await self.send(text_data=json.dumps({"message": message}))
+        await self.send(text_data=json.dumps({"message": message, "user": user}))
+
+    @database_sync_to_async
+    def get_room(self, room_name):
+        return ChatRoom.objects.get(name=room_name)
+
+    @database_sync_to_async
+    def save_message(self, room, user, message):
+        Message.objects.create(room=room, user=user, content=message)
