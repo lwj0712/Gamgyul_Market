@@ -1,6 +1,9 @@
 from rest_framework import generics, permissions
-from .models import Product, ProductImage
-from .serializers import ProductListSerializer, ProductSerializer
+from .models import Product, ProductImage, Review
+from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -32,6 +35,26 @@ class ProductDetailView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
     lookup_field = "id"
 
+    def get(self, request, *args, **kwargs):
+        product = self.get_object()
+        reviews = Review.objects.filter(product=product)
+        review_serializer = ReviewSerializer(reviews, many=True)
+        product_serializer = self.get_serializer(product)
+        return Response(
+            {
+                "product": product_serializer.data,
+                "reviews": review_serializer.data,
+            }
+        )
+
+    def post(self, request, *args, **kwargs):
+        product = self.get_object()
+        serializer = ReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user, product=product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ProductUpdateView(generics.UpdateAPIView):
     queryset = Product.objects.all()
@@ -50,4 +73,16 @@ class ProductDeleteView(generics.DestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    lookup_field = "id"
+
+
+class IsReviewOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user
+
+
+class ReviewDeleteView(generics.DestroyAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated, IsReviewOwner]
     lookup_field = "id"
