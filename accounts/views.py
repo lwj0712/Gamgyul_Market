@@ -7,6 +7,19 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
+from django.contrib.auth.tokens import (
+    default_token_generator,
+)  # Django에서 제공하는 토큰 생성기, 보안 관련 작업에 사용, 토큰은 시간이 지나면 만료
+from django.utils.http import (
+    urlsafe_base64_encode,  # base64_문자열로 인코딩
+    urlsafe_base64_decode,  # 문자열을 원래 데이터로 디코팅
+)
+from django.utils.encoding import (
+    force_bytes,  # 주어진 문자열을 바이트 문자열로 변환
+    force_str,  # 바이트 문자열을 일반 문자열로 변환
+)
+from django.core.mail import send_mail  # 이메일 전송 기능
+from django.urls import reverse
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -32,6 +45,7 @@ class SignUpView(generics.CreateAPIView):
 class LoginView(APIView):
     """
     로그인 API View
+    비활성화된 계정일 시, 재활성화 질문
     """
 
     permission_classes = [AllowAny]
@@ -51,8 +65,12 @@ class LoginView(APIView):
                     )
                 else:
                     return Response(
-                        {"detail": "계정이 비활성화되었습니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
+                        {
+                            "detail": "계정이 비활성화되어 있습니다. 재활성화하시겠습니까?",
+                            "inactive_account": True,
+                            "email": user.email,
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
                     )
             else:
                 return Response(
@@ -186,6 +204,75 @@ class UserDeactivateView(APIView):
             {"detail": "귀하의 계정이 비활성화되었으며 로그아웃되었습니다."},
             status=status.HTTP_200_OK,
         )
+
+
+class RequestReactivationView(APIView):
+    """
+    재활성화 요청 처리 api view
+    """
+
+    def post(self, request):
+        email = request.data.get("email")  # email get으로 받아오기
+        try:
+            user = User.objects.get(
+                email=email, is_active=False
+            )  # 비활성화 유저의 메일이라면 받아옴
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "해당 이메일의 비활성화된 계정을 찾을 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token = default_token_generator.make_token(user)  # 토큰 발행
+        uid = urlsafe_base64_encode(force_bytes(user.pk))  # 인코딩
+        activation_link = request.build_absolute_uri(
+            reverse(
+                "activate_account", kwargs={"uidb64": uid, "token": token}
+            )  # activate account에 해당하는 url 패턴에 uid, token 전달
+        )
+        # 이메일 보냄
+        send_mail(
+            "계정 재활성화",
+            f"계정을 재활성화하려면 다음 링크를 클릭하세요: {activation_link}",
+            settings.DEFAULT_FROM_EMAIL,  # 발신자
+            [email],  # 수신자
+            fail_silently=False,
+        )
+
+        return Response(
+            {"detail": "재활성화 링크가 이메일로 전송되었습니다."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ActivateAccountView(APIView):
+    """
+    유저 활성화 api view
+    전달받은 uid 디코딩
+    토큰 유효성 검사 이후 활성화 True로 바꿈
+    """
+
+    def get(self, request, uidb64, token):
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            login(request, user)  # 바로 로그인
+            return Response(
+                {"detail": "계정이 성공적으로 재활성화되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {"detail": "유효하지 않은 활성화 링크입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class UserDeleteView(APIView):
