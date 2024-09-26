@@ -12,10 +12,14 @@
     <a href="{% url 'create_room' %}">새로운 대화 시작하기</a>
 
     <ul>
-        {% for room in chat_rooms %}
-            <li><a href="{% url 'room' room.name %}">{{ room.name }}</a></li>
+        {% for participant in chat_rooms %}
+            <li>
+                <a href="{% url 'room' participant.room.name %}">
+                    {{ participant.room.name }}
+                </a>
+            </li>
         {% empty %}
-            <li>현재 생성된 채팅방이 없습니다.</li>
+            <li>대화 중인 채팅방이 없습니다.</li>
         {% endfor %}
     </ul>
 </body>
