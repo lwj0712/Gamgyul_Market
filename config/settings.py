@@ -26,17 +26,21 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "accounts",
     "insta",
     "market",
     "chat",
     "alarm",
     "rest_framework",
+    "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "django_filters",
+    "dj_rest_auth",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "dj_rest_auth.registration",
     "allauth.socialaccount.providers.google",  # Google 로그인을 사용할 경우
     "drf_yasg",
     "corsheaders",
@@ -82,11 +86,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -189,6 +193,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SITE_ID = 1
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = "my-app-auth"
+JWT_AUTH_REFRESH_COOKIE = "my-refresh-token"
+
+LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
+ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
+ACCOUNT_LOGOUT_ON_GET = True
 
 LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
 ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
@@ -206,6 +217,10 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_CALLBACK_URI = "http://localhost:8000/accounts/google/login/callback"
 
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
