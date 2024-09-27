@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Avg
 
 
 # Product Model
@@ -21,6 +22,9 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def average_rating(self):
+        return self.reviews.aggregate(Avg("rating"))["rating_avg"]
 
 
 # ProductImage Model

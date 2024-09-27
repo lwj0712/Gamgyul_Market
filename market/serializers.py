@@ -13,14 +13,16 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source="user.username")
+    average_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "user"]
+        fields = ["id", "name", "price", "user", "average_rating"]
 
 
 # Product Serializer
 class ProductSerializer(serializers.ModelSerializer):
+    average_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Product
@@ -35,6 +37,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "harvest_date",
             "created_at",
             "updated_at",
+            "average_rating",
             # "images",
         ]
 
