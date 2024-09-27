@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from taggit.managers import TaggableManager
 
 
 class Post(models.Model):
@@ -10,6 +11,7 @@ class Post(models.Model):
     location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
@@ -21,6 +23,14 @@ class PostImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.post.user.username}"
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(post__images__count__lte=10),
+                name="max_10_images_per_post",
+            )
+        ]
 
 
 class Comment(models.Model):
@@ -36,27 +46,6 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s comment on {self.post}"
-
-
-class Hashtag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-
-class PostHashtag(models.Model):
-    post = models.ForeignKey(
-        Post, on_delete=models.CASCADE, related_name="post_hashtags"
-    )
-    hashtag = models.ForeignKey(
-        Hashtag, on_delete=models.CASCADE, related_name="post_hashtags"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("post", "hashtag")
 
 
 class Like(models.Model):
