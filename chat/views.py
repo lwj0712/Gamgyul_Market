@@ -58,6 +58,14 @@ class CreateChatRoomView(LoginRequiredMixin, View):
                 request, self.template_name, {"error": "존재하지 않는 사용자입니다."}
             )
 
+        # 자기 자신의 이름을 입력했는지 확인
+        if target_user_instance == request.user:
+            return render(
+                request,
+                self.template_name,
+                {"error": "다른 사용자의 이름을 입력해주세요."},
+            )
+
         # 사용자 간 고유한 방을 만들기 위해 이름 생성
         sorted_users = sorted(
             [self.request.user.username, target_user_instance.username]
