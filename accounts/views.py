@@ -27,8 +27,9 @@ from .serializers import (
     ProfileSerializer,
     PasswordChangeSerializer,
     ProfileUpdateSerializer,
+    PrivacySettingsSerializer,
 )
-from .models import Follow
+from .models import Follow, PrivacySettings
 
 User = get_user_model()
 
@@ -154,6 +155,32 @@ class ProfileDetailView(generics.RetrieveAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "username"
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+
+class PrivacySettingsView(generics.RetrieveUpdateAPIView):
+    """
+    프로필 설정 API view
+    privacysettingsserializer 사용
+    """
+
+    serializer_class = PrivacySettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return PrivacySettings.objects.get_or_create(user=self.request.user)[0]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
 
 class ProfileUpdateView(generics.UpdateAPIView):

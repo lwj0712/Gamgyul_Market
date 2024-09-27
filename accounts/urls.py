@@ -12,6 +12,11 @@ urlpatterns = [
         views.ProfileDetailView.as_view(),
         name="profile_detail",
     ),
+    path(
+        "privacy-settings/",
+        views.PrivacySettingsView.as_view(),
+        name="privacy_settings",
+    ),
     path("profile/update/", views.ProfileUpdateView.as_view(), name="profile_update"),
     path("follow/<int:pk>/", views.FollowView.as_view(), name="follow"),
     path("unfollow/<int:pk>/", views.UnfollowView.as_view(), name="unfollow"),
