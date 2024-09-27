@@ -126,9 +126,17 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
+    """
+    팔로우 serializer
+    """
+
+    id = serializers.CharField(read_only=True)
+    nickname = serializers.CharField(read_only=True)
+    profile_image = serializers.ImageField(read_only=True)
+
     class Meta:
         model = User
-        fields = ("id", "username", "nickname", "profile_image")
+        fields = ("id", "nickname", "profile_image")
 
 
 class CommentedPostSerializer(serializers.ModelSerializer):
@@ -153,6 +161,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     기본 정보, 마켓 정보, 팔로우 관계와 수, 댓글 단 post 내용
     """
 
+    # get_<field명> 메서드로 데이터 직렬화
     followers = serializers.SerializerMethodField()
     following = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()

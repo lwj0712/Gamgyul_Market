@@ -13,6 +13,8 @@ urlpatterns = [
         name="profile_detail",
     ),
     path("profile/update/", views.ProfileUpdateView.as_view(), name="profile_update"),
+    path("follow/<int:pk>/", views.FollowView.as_view(), name="follow"),
+    path("unfollow/<int:pk>/", views.UnfollowView.as_view(), name="unfollow"),
     path("deactivate/", views.UserDeactivateView.as_view(), name="user_deactivate"),
     path("delete/", views.UserDeleteView.as_view(), name="user_delete"),
     path("google/", views.GoogleLoginView.as_view(), name="google_login"),

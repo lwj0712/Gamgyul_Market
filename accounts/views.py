@@ -23,10 +23,12 @@ from django.urls import reverse
 from .serializers import (
     UserSerializer,
     LoginSerializer,
+    FollowSerializer,
     ProfileSerializer,
     PasswordChangeSerializer,
     ProfileUpdateSerializer,
 )
+from .models import Follow
 
 User = get_user_model()
 
@@ -183,6 +185,50 @@ class ProfileUpdateView(generics.UpdateAPIView):
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
+
+
+class FollowView(generics.CreateAPIView):
+    """
+    팔로우 api view
+    follow serializer 사용
+    create 메서드로 팔로우 기능 구현
+    get_or_create로 중복 제거
+    """
+
+    serializer_class = FollowSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        following_id = self.kwargs["pk"]
+        following_user = User.objects.get(id=following_id)
+        Follow.objects.get_or_create(
+            follower=self.request.user, following=following_user
+        )
+        profile_serializer = ProfileSerializer(
+            following_user, context={"request": request}
+        )
+        return Response(profile_serializer.data)
+
+
+class UnfollowView(generics.DestroyAPIView):
+    """
+    언팔로우 api view
+    destoryAPIView로 DELETE 요청 처리
+    """
+
+    queryset = Follow.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        following_id = self.kwargs["pk"]
+        following_user = User.objects.get(id=following_id)
+        Follow.objects.filter(
+            follower=self.request.user, following=following_user
+        ).delete()
+        profile_serializer = ProfileSerializer(
+            following_user, context={"request": request}
+        )
+        return Response(profile_serializer.data)
 
 
 class UserDeactivateView(APIView):
