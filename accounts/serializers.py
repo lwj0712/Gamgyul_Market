@@ -346,3 +346,9 @@ class PrivacySettingsSerializer(serializers.ModelSerializer):
                 visible_fields.append(field.name.replace(f"{viewer_type}_can_see_", ""))
 
         return visible_fields
+
+
+class ProfileSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "nickname", "profile_image"]
