@@ -45,14 +45,15 @@ class CreateChatRoomView(LoginRequiredMixin, View):
             "target_user"
         )  # 상대방 유저 ID 또는 username 받아오기
         if not target_user:
-            return self.form_invalid(
-                "상대방을 선택해야 합니다."
-            )  # 상대방이 선택되지 않았을 때
+            return render(
+                request, self.template_name, {"error": "상대방을 선택해야 합니다."}
+            )
 
         try:
             # 존재하는 사용자인지 확인
             target_user_instance = User.objects.get(username=target_user)
         except User.DoesNotExist:
+            # 존재하지 않는 사용자인 경우 템플릿에 에러 메시지 전달
             return render(
                 request, self.template_name, {"error": "존재하지 않는 사용자입니다."}
             )
