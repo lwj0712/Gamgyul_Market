@@ -40,4 +40,5 @@ urlpatterns = [
         views.ActivateAccountView.as_view(),
         name="activate_account",
     ),
+    path("search/", views.ProfileSearchView.as_view(), name="profile_search"),
 ]

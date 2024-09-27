@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
 from django.contrib.auth.tokens import (
@@ -28,6 +29,7 @@ from .serializers import (
     PasswordChangeSerializer,
     ProfileUpdateSerializer,
     PrivacySettingsSerializer,
+    ProfileSearchSerializer,
 )
 from .models import Follow, PrivacySettings
 
@@ -394,3 +396,18 @@ class PasswordChangeView(generics.UpdateAPIView):
             {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
             status=status.HTTP_200_OK,
         )
+
+
+class ProfileSearchView(generics.ListAPIView):
+    # serializer_class = ProfileSearchSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        query = self.request.query_params.get("q", "")
+        if query:
+            return User.objects.filter(
+                Q(username__icontains=query)
+                | Q(nickname__icontains=query)
+                | Q(email__icontains=query)
+            ).distinct()
+        return User.objects.none()
