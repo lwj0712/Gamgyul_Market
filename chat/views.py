@@ -24,6 +24,12 @@ class ChatRoomView(LoginRequiredMixin, TemplateView):
         room_name = self.kwargs["room_name"]
         room = get_object_or_404(ChatRoom, name=room_name)
         messages = Message.objects.filter(room=room).order_by("sent_at")
+        participant = (
+            ChatParticipant.objects.filter(room=room)
+            .exclude(user=self.request.user)
+            .first()
+        )
+        context["room_name"] = f"{participant.user.username}님과의 대화"
         context["room"] = room
         context["messages"] = messages
         return context
@@ -79,9 +85,28 @@ class ChatRoomListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # 사용자가 참여한 채팅방을 가져오는지 확인
-        return ChatParticipant.objects.filter(user=self.request.user).select_related(
-            "room"
-        )
+        chat_participants = ChatParticipant.objects.filter(
+            user=self.request.user
+        ).select_related("room")
+
+        chat_rooms = []
+        for participant in chat_participants:
+            room = participant.room
+            # 상대방의 이름을 찾기
+            other_user = [
+                p.user.username
+                for p in room.chatparticipant_set.exclude(user=self.request.user)
+            ]
+            # 상대방의 이름이 존재할 경우
+            if other_user:
+                chat_rooms.append(
+                    {
+                        "room": room,
+                        "room_name": f"{other_user[0]}님과의 대화",
+                    }
+                )
+
+        return chat_rooms
 
 
 # 메시지 생성 API (POST 요청)
