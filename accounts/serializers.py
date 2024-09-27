@@ -5,10 +5,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
+from django.conf import settings
 from allauth.socialaccount.models import SocialAccount
-
-
-# from insta.models import Comment, Post
+from insta.models import Comment, Post
 from market.models import Product
 
 User = get_user_model()
@@ -50,6 +49,34 @@ class UserSerializer(serializers.ModelSerializer):
             "longitude": {"required": False},
             "temperature": {"read_only": True},
         }
+
+    def validate_profile_image(self, value):
+        if value:
+            # 파일 크기 제한
+            if value.size > settings.MAX_PROFILE_IMAGE_SIZE:
+                raise ValidationError(
+                    f"이미지 파일 크기는 {settings.MAX_PROFILE_IMAGE_SIZE / (1024 * 1024)}MB를 초과할 수 없습니다."
+                )
+
+            # 이미지 크기 제한
+            width, height = get_image_dimensions(value)
+            if (
+                width > settings.MAX_PROFILE_IMAGE_WIDTH
+                or height > settings.MAX_PROFILE_IMAGE_HEIGHT
+            ):
+                raise ValidationError(
+                    f"이미지 크기는 {settings.MAX_PROFILE_IMAGE_WIDTH}x{settings.MAX_PROFILE_IMAGE_HEIGHT} 픽셀을 초과할 수 없습니다."
+                )
+
+            # 파일 확장자 제한
+            allowed_extensions = settings.ALLOWED_PROFILE_IMAGE_EXTENSIONS
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in allowed_extensions:
+                raise ValidationError(
+                    f"허용되는 이미지 형식은 {', '.join(allowed_extensions)}입니다."
+                )
+
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -104,10 +131,10 @@ class FollowSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "nickname", "profile_image")
 
 
-# class CommentedPostSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Post
-#         fields = ("id", "content", "created_at")
+class CommentedPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ("id", "content", "created_at")
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -130,7 +157,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     following = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
-    # commented_posts = serializers.SerializerMethodField()
+    commented_posts = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
 
     class Meta:
@@ -163,12 +190,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_following_count(self, obj):
         return obj.following.count()
 
-    # def get_commented_posts(self, obj):
-    #     comments = (
-    #         Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
-    #     )
-    #     posts = Post.objects.filter(id__in=comments)
-    #     return CommentedPostSerializer(posts, many=True).data
+    def get_commented_posts(self, obj):
+        comments = (
+            Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
+        )
+        posts = Post.objects.filter(id__in=comments)
+        return CommentedPostSerializer(posts, many=True).data
 
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
@@ -190,7 +217,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         }
 
     def validate_email(self, value):
-        # 현재 사용자르 제외한 유저들의 email 체크
+        # 현재 사용자를 제외한 유저들의 email 체크
         if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
             raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
         return value
@@ -198,22 +225,27 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     def validate_profile_image(self, value):
         if value:
             # 파일 크기 제한
-            if value.size > 2 * 1024 * 1024:
-                raise ValidationError("이미지 파일 크기는 2MB를 초과할 수 없습니다.")
+            if value.size > settings.MAX_PROFILE_IMAGE_SIZE:
+                raise ValidationError(
+                    f"이미지 파일 크기는 {settings.MAX_PROFILE_IMAGE_SIZE / (1024 * 1024)}MB를 초과할 수 없습니다."
+                )
 
             # 이미지 크기 제한
             width, height = get_image_dimensions(value)
-            if width > 1000 or height > 1000:
+            if (
+                width > settings.MAX_PROFILE_IMAGE_WIDTH
+                or height > settings.MAX_PROFILE_IMAGE_HEIGHT
+            ):
                 raise ValidationError(
-                    "이미지 크기는 1000x1000 픽셀을 초과할 수 없습니다."
+                    f"이미지 크기는 {settings.MAX_PROFILE_IMAGE_WIDTH}x{settings.MAX_PROFILE_IMAGE_HEIGHT} 픽셀을 초과할 수 없습니다."
                 )
 
             # 파일 확장자 제한
-            allowed_extensions = [".jpg", ".jpeg", ".png", ".gif"]
+            allowed_extensions = settings.ALLOWED_PROFILE_IMAGE_EXTENSIONS
             ext = os.path.splitext(value.name)[1].lower()
             if ext not in allowed_extensions:
                 raise ValidationError(
-                    "허용되는 이미지 형식은 JPG, JPEG, PNG, GIF입니다."
+                    f"허용되는 이미지 형식은 {', '.join(allowed_extensions)}입니다."
                 )
 
         return value
