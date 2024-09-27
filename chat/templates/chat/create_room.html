@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <title새로운 대화 시작하기</title>
+    <meta charset="UTF-8">
+    <title>새로운 대화 시작하기</title>
 </head>
 <body>
     <h1>새로운 대화 시작하기</h1>
     <form method="POST">
         {% csrf_token %}
-        <label for="room_name">방 이름:</label>
-        <input id="room_name" name="room_name" type="text" required>
+        <input type="text" name="target_user" placeholder="대화할 사용자 이름" required>
         <button type="submit">확인</button>
     </form>
+    <a href="{% url 'chat:chatroom_list' %}">목록으로</a>
 </body>
 </html>
