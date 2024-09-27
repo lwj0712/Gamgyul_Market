@@ -9,6 +9,7 @@ from django.conf import settings
 from allauth.socialaccount.models import SocialAccount
 from insta.models import Comment, Post
 from market.models import Product
+from .models import PrivacySettings
 
 User = get_user_model()
 
@@ -210,6 +211,52 @@ class ProfileSerializer(serializers.ModelSerializer):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True).data
 
+    def get_viewer_type(self, viewer, profile_owner):
+        # 프로필 열람 타입 구분 메서드
+        is_follower = viewer.following.filter(following=profile_owner).exists()
+        is_following = viewer.followers.filter(follower=profile_owner).exists()
+
+        if is_follower and is_following:
+            return "follower"  # 팔로워 기준 값 리턴
+        elif is_follower:
+            return "follower"
+        elif is_following:
+            return "following"
+        else:
+            return "others"
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user != instance:
+            viewer_type = self.get_viewer_type(request.user, instance)
+            privacy_settings = PrivacySettings.objects.get_or_create(user=instance)[0]
+
+            fields_to_check = {
+                "email": f"{viewer_type}_can_see_email",
+                "bio": f"{viewer_type}_can_see_bio",
+                "followers": f"{viewer_type}_can_see_follower_list",
+                "following": f"{viewer_type}_can_see_following_list",
+                "commented_posts": f"{viewer_type}_can_see_posts",
+                "products": f"{viewer_type}_can_see_posts",
+            }
+
+            for field, setting in fields_to_check.items():
+                if not getattr(privacy_settings, setting, True):
+                    data.pop(field, None)
+
+            # 항상 표시되어야 하는 필드들
+            always_visible = [
+                "id",
+                "username",
+                "nickname",
+                "profile_image",
+                "temperature",
+            ]
+            data = {k: v for k, v in data.items() if k in always_visible or k in data}
+
+        return data
+
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """
@@ -269,10 +316,33 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
                 )  # 기존 프로필이 있다면 제거 후 생성
             instance.profile_image = profile_image
 
-        # Update other fields
+        # 다른 필드도 업데이트
         instance.nickname = validated_data.get("nickname", instance.nickname)
         instance.bio = validated_data.get("bio", instance.bio)
         instance.email = validated_data.get("email", instance.email)
 
         instance.save()
         return instance
+
+
+class PrivacySettingsSerializer(serializers.ModelSerializer):
+    """
+    프로필 설정 serializer
+    """
+
+    class Meta:
+        model = PrivacySettings
+        exclude = ("user",)
+
+    def get_visible_fields(self, viewer_type):
+        if viewer_type not in ["follower", "following", "others"]:
+            raise serializers.ValidationError("Invalid viewer type")
+
+        visible_fields = []
+        for field in self.Meta.model._meta.fields:
+            if field.name.startswith(f"{viewer_type}_can_see_") and getattr(
+                self.instance, field.name
+            ):
+                visible_fields.append(field.name.replace(f"{viewer_type}_can_see_", ""))
+
+        return visible_fields
