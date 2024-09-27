@@ -1,7 +1,12 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
 from allauth.socialaccount.models import SocialAccount
+
 
 # from insta.models import Comment, Post
 from market.models import Product
@@ -22,14 +27,14 @@ class SocialAccountSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """
     회원가입 serializer
-    password2: 비밀번호 확인 메서드 후 회원 정보에서 제거
+    password2 필드 제거: 비밀번호 확인은 프론트엔드에서 처리
+    유효성 검사 로직 제거
     소셜 계정 정보 추가
     """
 
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password]
     )
-    password2 = serializers.CharField(write_only=True, required=True)
     social_accounts = SocialAccountSerializer(many=True, read_only=True)
 
     class Meta:
@@ -46,15 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
             "temperature": {"read_only": True},
         }
 
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password": "비밀번호가 일치하지 않습니다."}
-            )
-        return attrs
-
     def create(self, validated_data):
-        validated_data.pop("password2")
         user = User.objects.create_user(**validated_data)
         return user
 
@@ -75,6 +72,30 @@ class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """
+    비밀번호 변경 serializer
+    이전 비밀번호가 올바른 지 유효성 검사
+    통과 시 new_password로 변경해서 저장
+    """
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("이전 비밀번호가 올바르지 않습니다.")
+        return value
+
+    def save(self, **kwargs):
+        password = self.validated_data["new_password"]
+        user = self.context["request"].user
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -152,3 +173,65 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True).data
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """
+    프로필 업데이트 serializer
+    nickname, bio, email, profile_image 변경
+    """
+
+    class Meta:
+        model = User
+        fields = ["nickname", "bio", "email", "profile_image"]
+        extra_kwargs = {
+            "email": {"required": False},
+            "profile_image": {"required": False},
+        }
+
+    def validate_email(self, value):
+        # 현재 사용자르 제외한 유저들의 email 체크
+        if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
+            raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
+        return value
+
+    def validate_profile_image(self, value):
+        if value:
+            # 파일 크기 제한
+            if value.size > 2 * 1024 * 1024:
+                raise ValidationError("이미지 파일 크기는 2MB를 초과할 수 없습니다.")
+
+            # 이미지 크기 제한
+            width, height = get_image_dimensions(value)
+            if width > 1000 or height > 1000:
+                raise ValidationError(
+                    "이미지 크기는 1000x1000 픽셀을 초과할 수 없습니다."
+                )
+
+            # 파일 확장자 제한
+            allowed_extensions = [".jpg", ".jpeg", ".png", ".gif"]
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in allowed_extensions:
+                raise ValidationError(
+                    "허용되는 이미지 형식은 JPG, JPEG, PNG, GIF입니다."
+                )
+
+        return value
+
+    def update(self, instance, validated_data):
+        # 업데이트된 이미지 파일 받아옴
+        profile_image = validated_data.get("profile_image")
+        if profile_image and isinstance(profile_image, InMemoryUploadedFile):
+            if instance.profile_image:
+                instance.profile_image.delete(
+                    save=False
+                )  # 기존 프로필이 있다면 제거 후 생성
+            instance.profile_image = profile_image
+
+        # Update other fields
+        instance.nickname = validated_data.get("nickname", instance.nickname)
+        instance.bio = validated_data.get("bio", instance.bio)
+        instance.email = validated_data.get("email", instance.email)
+
+        instance.save()
+        return instance

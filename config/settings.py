@@ -201,10 +201,6 @@ LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
 ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
 ACCOUNT_LOGOUT_ON_GET = True
 
-LOGIN_REDIRECT_URL = "/"  # 로그인 후 리다이렉트 될 경로
-ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy("accounts:login")
-ACCOUNT_LOGOUT_ON_GET = True
-
 # 구글 소셜 계정 설정
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -221,6 +217,17 @@ SOCIALACCOUNT_PROVIDERS = {
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_CALLBACK_URI = "http://localhost:8000/accounts/google/login/callback"
+
+# SMTP(Simple Mail Transfer ProtocoL) 설정
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
 
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.db"

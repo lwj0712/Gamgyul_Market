@@ -2,7 +2,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Product URLs
     path("products/", views.ProductListView.as_view(), name="product-list"),
     path("products/create/", views.ProductCreateView.as_view(), name="product-create"),
     path(
@@ -19,11 +18,8 @@ urlpatterns = [
         name="product-delete",
     ),
     path(
-        "products/<int:product_id>/upload-image/",
-        views.ProductImageUploadView.as_view(),
-        name="product-image-upload",
+        "products/<int:product_id>/reviews/<int:id>/delete/",
+        views.ReviewDeleteView.as_view(),
+        name="review-delete",
     ),
-    # Review URLs
-    path("reviews/", views.ReviewListView.as_view(), name="review-list"),
-    path("reviews/<int:pk>/", views.ReviewDetailView.as_view(), name="review-detail"),
 ]
