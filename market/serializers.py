@@ -22,8 +22,6 @@ class ProductListSerializer(serializers.ModelSerializer):
 # Product Serializer
 class ProductSerializer(serializers.ModelSerializer):
 
-    # reviews = ReviewSerializer(many=True, read_only=True)
-
     class Meta:
         model = Product
         fields = [
@@ -38,7 +36,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             # "images",
-            # "reviews",  # 상품 이미지와 리뷰도 포함
         ]
 
 
