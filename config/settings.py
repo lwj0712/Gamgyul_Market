@@ -228,11 +228,9 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
-# 프로필 이미지 설정
-MAX_PROFILE_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
-MAX_PROFILE_IMAGE_WIDTH = 1000
-MAX_PROFILE_IMAGE_HEIGHT = 1000
-ALLOWED_PROFILE_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif"]
+# imagekit 설정
+IMAGEKIT_DEFAULT_CACHEFILE_STRATEGY = "imagekit.cachefiles.strategies.Optimistic"
+IMAGEKIT_CACHEFILE_DIR = "CACHE/images"
 
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
