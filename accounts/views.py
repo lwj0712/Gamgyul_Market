@@ -85,6 +85,39 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class LogoutView(APIView):
+    """
+    로그아웃 API View
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
+
+
+class PasswordChangeView(generics.UpdateAPIView):
+    """
+    비밀번호 변경 api view
+    serializer 유효성 검사 후 저장
+    저장 후 로그아웃 기능
+    """
+
+    serializer_class = PasswordChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        logout(request)
+        return Response(
+            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class GoogleLoginView(SocialLoginView):
     """
     google 로그인 담당 처리 view
@@ -98,7 +131,7 @@ class GoogleLoginView(SocialLoginView):
 
 class GoogleLoginURLView(APIView):
     """
-    Google login URL API view
+    Google 로그인 URL API view
     """
 
     permission_classes = [AllowAny]
@@ -133,131 +166,6 @@ class GoogleCallbackView(APIView):
         return Response(
             {"error": "코드를 찾을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class LogoutView(APIView):
-    """
-    로그아웃 API View
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        logout(request)
-        return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
-
-
-class ProfileDetailView(generics.RetrieveAPIView):
-    """
-    프로필 API view
-    profileserializer 사용
-    """
-
-    queryset = User.objects.all()
-    serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = "username"
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
-
-
-class PrivacySettingsView(generics.RetrieveUpdateAPIView):
-    """
-    프로필 설정 API view
-    privacysettingsserializer 사용
-    """
-
-    serializer_class = PrivacySettingsSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return PrivacySettings.objects.get_or_create(user=self.request.user)[0]
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-
-class ProfileUpdateView(generics.UpdateAPIView):
-    """
-    프로필 수정 API view
-    """
-
-    serializer_class = ProfileUpdateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-    def update(self, request, *args, **kwargs):
-        # patch, put 요청 모두 처리
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        # serializer의 save() 메서드를 호출하여 데이터베이스에 변경사항을 저장
-        self.perform_update(serializer)
-
-        # 관련 객체들을 미리 가져왔을 때 쓰는 캐시, update되면 cache 비움(최적화)
-        if getattr(instance, "_prefetched_objects_cache", None):
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
-    def partial_update(self, request, *args, **kwargs):
-        kwargs["partial"] = True
-        return self.update(request, *args, **kwargs)
-
-
-class FollowView(generics.CreateAPIView):
-    """
-    팔로우 api view
-    follow serializer 사용
-    create 메서드로 팔로우 기능 구현
-    get_or_create로 중복 제거
-    """
-
-    serializer_class = FollowSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        following_id = self.kwargs["pk"]
-        following_user = User.objects.get(id=following_id)
-        Follow.objects.get_or_create(
-            follower=self.request.user, following=following_user
-        )
-        profile_serializer = ProfileSerializer(
-            following_user, context={"request": request}
-        )
-        return Response(profile_serializer.data)
-
-
-class UnfollowView(generics.DestroyAPIView):
-    """
-    언팔로우 api view
-    destoryAPIView로 DELETE 요청 처리
-    """
-
-    queryset = Follow.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def destroy(self, request, *args, **kwargs):
-        following_id = self.kwargs["pk"]
-        following_user = User.objects.get(id=following_id)
-        Follow.objects.filter(
-            follower=self.request.user, following=following_user
-        ).delete()
-        profile_serializer = ProfileSerializer(
-            following_user, context={"request": request}
-        )
-        return Response(profile_serializer.data)
 
 
 class UserDeactivateView(APIView):
@@ -377,29 +285,125 @@ class UserDeleteView(APIView):
         )
 
 
-class PasswordChangeView(generics.UpdateAPIView):
+class ProfileDetailView(generics.RetrieveAPIView):
     """
-    비밀번호 변경 api view
-    serializer 유효성 검사 후 저장
-    저장 후 로그아웃 기능
+    프로필 API view
+    profileserializer 사용
     """
 
-    serializer_class = PasswordChangeSerializer
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "username"
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+
+class ProfileUpdateView(generics.UpdateAPIView):
+    """
+    프로필 수정 API view
+    """
+
+    serializer_class = ProfileUpdateSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        return self.request.user
+
     def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        # patch, put 요청 모두 처리
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        logout(request)
-        return Response(
-            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
-            status=status.HTTP_200_OK,
+        # serializer의 save() 메서드를 호출하여 데이터베이스에 변경사항을 저장
+        self.perform_update(serializer)
+
+        # 관련 객체들을 미리 가져왔을 때 쓰는 캐시, update되면 cache 비움(최적화)
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
+
+class PrivacySettingsView(generics.RetrieveUpdateAPIView):
+    """
+    프로필 보안 설정 API view
+    privacysettingsserializer 사용
+    """
+
+    serializer_class = PrivacySettingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return PrivacySettings.objects.get_or_create(user=self.request.user)[0]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+
+class FollowView(generics.CreateAPIView):
+    """
+    팔로우 api view
+    follow serializer 사용
+    create 메서드로 팔로우 기능 구현
+    get_or_create로 중복 제거
+    """
+
+    serializer_class = FollowSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        following_id = self.kwargs["pk"]
+        following_user = User.objects.get(id=following_id)
+        Follow.objects.get_or_create(
+            follower=self.request.user, following=following_user
         )
+        profile_serializer = ProfileSerializer(
+            following_user, context={"request": request}
+        )
+        return Response(profile_serializer.data)
+
+
+class UnfollowView(generics.DestroyAPIView):
+    """
+    언팔로우 api view
+    destoryAPIView로 DELETE 요청 처리
+    """
+
+    queryset = Follow.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        following_id = self.kwargs["pk"]
+        following_user = User.objects.get(id=following_id)
+        Follow.objects.filter(
+            follower=self.request.user, following=following_user
+        ).delete()
+        profile_serializer = ProfileSerializer(
+            following_user, context={"request": request}
+        )
+        return Response(profile_serializer.data)
 
 
 class ProfileSearchView(generics.ListAPIView):
-    # serializer_class = ProfileSearchSerializer
+    """
+    프로필 검색 api view
+    """
+
+    serializer_class = ProfileSearchSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
