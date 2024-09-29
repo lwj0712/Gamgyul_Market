@@ -1,10 +1,14 @@
 from rest_framework import generics, permissions
 from .models import Product, ProductImage, Review
 from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Avg
+from rest_framework.renderers import TemplateHTMLRenderer
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -15,8 +19,16 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.annotate(average_rating=Avg("reviews__rating"))
+    queryset = Product.objects.annotate(average_rating=Avg("reviews__rating")).order_by(
+        "-created_at"
+    )
     serializer_class = ProductListSerializer
+    renderer_classes = [TemplateHTMLRenderer]  # HTML 렌더링 설정
+    template_name = "market/product_list.html"  # 사용할 템플릿 경로
+
+    def get(self, request, *args, **kwargs):
+        products = self.get_queryset()
+        return Response({"products": products})
 
 
 class ProductCreateView(generics.CreateAPIView):
@@ -31,13 +43,17 @@ class ProductCreateView(generics.CreateAPIView):
             ProductImage.objects.create(product=product, image_urls=image)
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.annotate(average_rating=Avg("reviews__rating"))
     serializer_class = ProductSerializer
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_detail.html"
     lookup_field = "id"
 
     def get(self, request, *args, **kwargs):
         product = self.get_object()
+        print("Product ID:", product.id)
         reviews = Review.objects.filter(product=product)
         review_serializer = ReviewSerializer(reviews, many=True)
         product_serializer = self.get_serializer(product)
@@ -49,12 +65,31 @@ class ProductDetailView(generics.RetrieveAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-        product = self.get_object()
-        serializer = ReviewSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user, product=product)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            product = self.get_object()
+            content = request.POST.get("content")
+            rating = request.POST.get("rating")
+
+            # 리뷰 생성
+            review = Review.objects.create(
+                product=product, user=request.user, content=content, rating=rating
+            )
+
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": "Review created successfully",
+                    "data": {
+                        "id": review.id,
+                        "user": review.user.username,
+                        "content": review.content,
+                        "rating": review.rating,
+                        "created_at": review.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    },
+                }
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 class ProductUpdateView(generics.UpdateAPIView):
@@ -80,6 +115,17 @@ class ProductDeleteView(generics.DestroyAPIView):
 class IsReviewOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
+
+
+class ReviewCreateView(generics.CreateAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs["product_id"]  # URL에서 product_id를 가져옵니다.
+        product = get_object_or_404(Product, id=product_id)
+        serializer.save(user=self.request.user, product=product)
 
 
 class ReviewDeleteView(generics.DestroyAPIView):

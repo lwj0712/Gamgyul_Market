@@ -18,6 +18,11 @@ urlpatterns = [
         name="product-delete",
     ),
     path(
+        "products/<int:product_id>/reviews/create/",
+        views.ReviewCreateView.as_view(),
+        name="review-create",
+    ),
+    path(
         "products/<int:product_id>/reviews/<int:id>/delete/",
         views.ReviewDeleteView.as_view(),
         name="review-delete",
