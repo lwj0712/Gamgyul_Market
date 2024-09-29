@@ -23,12 +23,14 @@ class ProductListSerializer(serializers.ModelSerializer):
 # Product Serializer
 class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
+    username = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id",
             "name",
+            "username",
             "price",
             "description",
             "stock",
@@ -40,6 +42,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             # "images",
         ]
+
+    def get_username(self, obj):
+        return obj.user.username
 
 
 # ProductImage Serializer
