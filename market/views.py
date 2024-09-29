@@ -6,9 +6,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Avg
 from rest_framework.renderers import TemplateHTMLRenderer
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.urls import reverse
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -31,16 +32,39 @@ class ProductListView(generics.ListAPIView):
         return Response({"products": products})
 
 
-class ProductCreateView(generics.CreateAPIView):
+class ProductCreateView(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_create.html"  # 템플릿 경로 지정
 
-    def perform_create(self, serializer):
-        product = serializer.save(user=self.request.user)
-        images = self.request.FILES.getlist("image_urls")
-        for image in images:
-            ProductImage.objects.create(product=product, image_urls=image)
+    def get(self, request, *args, **kwargs):
+        # GET 요청 시, 빈 폼을 렌더링
+        return Response({"serializer": self.get_serializer()})
+
+    def post(self, request, *args, **kwargs):
+        # POST 요청을 처리하여 상품을 생성
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            product = serializer.save(user=self.request.user)
+            images = request.FILES.getlist("image_urls")
+
+            if len(images) > 5:
+                return Response(
+                    {"error": "최대 5장까지만 이미지를 업로드할 수 있습니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            for image in images:
+                ProductImage.objects.create(product=product, image_urls=image)
+
+            # 생성 후 상세 페이지로 리디렉션
+            success_url = reverse("product-detail", kwargs={"id": product.id})
+            return HttpResponseRedirect(success_url)
+
+        # 유효성 검사 실패 시 폼을 다시 렌더링
+        return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -53,7 +77,6 @@ class ProductDetailView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         product = self.get_object()
-        print("Product ID:", product.id)
         reviews = Review.objects.filter(product=product)
         review_serializer = ReviewSerializer(reviews, many=True)
         product_serializer = self.get_serializer(product)

@@ -42,7 +42,7 @@
         {% endfor %}
     </ul>
 
-    <button onclick="window.history.back();">뒤로</button>
+    <button onclick="window.location.href='{% url 'product-list' %}';">목록으로 돌아가기</button>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
