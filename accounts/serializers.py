@@ -1,11 +1,7 @@
-import os
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.exceptions import ValidationError
-from django.core.files.images import get_image_dimensions
-from django.conf import settings
 from allauth.socialaccount.models import SocialAccount
 from insta.models import Comment, Post
 from market.models import Product
@@ -49,6 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
             "bio",
             "profile_image",
             "profile_image_thumbnail",
+            "social_accounts",
         )
         extra_kwargs = {
             "password": {"write_only": True},

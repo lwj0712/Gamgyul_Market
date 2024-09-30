@@ -21,11 +21,13 @@ django-imagekit==5.0.0
 django-taggit==6.0.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
-drf-yasg==1.21.7
+drf-spectacular==0.27.2
 hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
 inflection==0.5.1
+jsonschema==4.23.0
+jsonschema-specifications==2023.12.1
 msgpack==1.1.0
 packaging==24.1
 pilkit==3.0
@@ -40,7 +42,9 @@ python-dotenv==1.0.1
 pytz==2024.2
 PyYAML==6.0.2
 redis==5.0.8
+referencing==0.35.1
 requests==2.32.3
+rpds-py==0.20.0
 service-identity==24.1.0
 setuptools==75.1.0
 sqlparse==0.5.1
