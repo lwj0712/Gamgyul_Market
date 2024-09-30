@@ -12,10 +12,20 @@ class ChatRoom(models.Model):
     participants = models.ManyToManyField(
         User, related_name="chat_rooms"
     )  # 사용자와의 다대다 관계 설정
+    name = models.CharField(max_length=255, blank=True)  # 채팅방 이름 필드 추가
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        # 채팅방 이름이 없을 경우 자동으로 생성
+        if not self.name:
+            participant_names = " & ".join(
+                [participant.username for participant in self.participants.all()]
+            )
+            self.name = f"{participant_names}의 대화"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.participants.first().username}님과의 대화"
+        return self.name
 
 
 class Message(models.Model):
