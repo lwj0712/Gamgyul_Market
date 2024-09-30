@@ -10,7 +10,7 @@ class PrivacySettingsInline(admin.StackedInline):
 
     model = PrivacySettings
     can_delete = False
-    verbose_name_plural = "Privacy Settings"
+    verbose_name_plural = "Privacy Setting"
 
 
 class CustomUserAdmin(UserAdmin):
