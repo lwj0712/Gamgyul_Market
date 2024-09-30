@@ -24,7 +24,7 @@ class Product(models.Model):
         return self.name
 
     def average_rating(self):
-        return self.reviews.aggregate(Avg("rating"))["rating_avg"]
+        return self.reviews.aggregate(Avg("rating"))["rating__avg"]
 
 
 # ProductImage Model

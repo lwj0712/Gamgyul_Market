@@ -7,6 +7,7 @@
 </head>
 <body>
     <h1>{{ product.name }}</h1>
+    <p>작성자 : {{ product.username }}</p>
     <p>가격: {{ product.price }}원</p>
     <p>별점: {{ product.average_rating }}</p>
     <p>제품 설명: {{ product.description }}</p>
@@ -14,6 +15,12 @@
     <p>품종: {{ product.variety }}</p>
     <p>재배 지역: {{ product.growing_region }}</p>
     <p>재배 일자: {{ product.harvest_date }}</p>
+
+
+    
+        <button onclick="window.location.href='{% url 'product-update' product.id %}';">수정</button>
+        <button onclick="window.location.href='{% url 'product-delete' product.id %}';">삭제</button>
+    
 
     <h3>리뷰 작성</h3>
     <form id="review-form" method="post" action="{% url 'product-detail' product.id %}">

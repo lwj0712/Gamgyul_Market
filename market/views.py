@@ -120,6 +120,27 @@ class ProductUpdateView(generics.UpdateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     lookup_field = "id"
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_update.html"  # 템플릿 경로 지정
+    http_method_names = ["get", "post", "patch"]
+
+    def get(self, request, *args, **kwargs):
+        product = self.get_object()
+        serializer = self.get_serializer(product)
+        return Response({"serializer": serializer, "product": product})
+
+    def post(self, request, *args, **kwargs):
+        product = self.get_object()
+        serializer = self.get_serializer(product, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            self.perform_update(serializer)
+            # 상품 수정 후 상세 페이지로 리디렉션
+            success_url = reverse("product-detail", kwargs={"id": product.id})
+            return HttpResponseRedirect(success_url)
+
+        # 유효성 검사 실패 시, 다시 폼을 렌더링
+        return Response({"serializer": serializer, "product": product}, status=400)
 
     def perform_update(self, serializer):
         product = serializer.save()
@@ -133,6 +154,22 @@ class ProductDeleteView(generics.DestroyAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     lookup_field = "id"
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_delete.html"  # 템플릿 경로 지정
+
+    def get(self, request, *args, **kwargs):
+        product = self.get_object()
+        return Response({"product": product})
+
+    def post(self, request, *args, **kwargs):
+        product = self.get_object()
+        self.perform_destroy(product)
+        # 삭제 후 목록 페이지로 리디렉션
+        success_url = reverse("product-list")
+        return HttpResponseRedirect(success_url)
+
+    def perform_destroy(self, instance):
+        instance.delete()
 
 
 class IsReviewOwner(permissions.BasePermission):
