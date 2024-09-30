@@ -16,19 +16,39 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         many=True,
         slug_field="username",
         queryset=User.objects.all(),
-        required=False,
+        required=True,
     )
+    name = serializers.CharField(read_only=True)
 
     class Meta:
         model = ChatRoom
-        fields = ["id", "participants", "created_at"]
+        fields = ["id", "participants", "name", "created_at"]
 
     def create(self, validated_data):
-        participants = validated_data.pop("participants", [])
-        chat_room = ChatRoom.objects.create(**validated_data)
+        participants = validated_data.pop("participants")
 
-        if participants:
-            chat_room.participants.set(participants)
+        if len(participants) != 2:
+            raise serializers.ValidationError("1대1 채팅만 가능합니다.")
+
+        # 참가자 ID를 정렬하여 room_key 생성
+        participant_ids = sorted([str(participant.id) for participant in participants])
+        room_key = "_".join(participant_ids)
+
+        # 중복 채팅방 체크
+        if ChatRoom.objects.filter(room_key=room_key).exists():
+            raise serializers.ValidationError("이미 이 사용자와의 채팅방이 존재합니다.")
+
+        # 새로운 채팅방 생성
+        chat_room = ChatRoom.objects.create(room_key=room_key)
+        chat_room.participants.set(participants)
+
+        # 채팅방 이름 생성
+        participant_usernames = ", ".join(
+            [participant.username for participant in participants]
+        )
+        chat_room.name = f"{participant_usernames}의 대화"
+        chat_room.save()
+
         return chat_room
 
 
@@ -42,7 +62,6 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = [
             "id",
-            "chat_room",
             "sender",
             "content",
             "image",
@@ -51,6 +70,15 @@ class MessageSerializer(serializers.ModelSerializer):
         ]
 
     read_only_fields = ["id", "sender", "sent_at", "is_read"]
+
+    def validate(self, data):
+        content = data.get("content")
+        image = data.get("image")
+        if not content and not image:
+            raise serializers.ValidationError(
+                "메시지는 텍스트 또는 이미지를 포함해야 합니다."
+            )
+        return data
 
     def validate_image(self, value):
         if value.size > 5 * 1024 * 1024:
