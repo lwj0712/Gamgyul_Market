@@ -228,6 +228,9 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
+# imagekit 설정
+IMAGEKIT_DEFAULT_CACHEFILE_STRATEGY = "imagekit.cachefiles.strategies.Optimistic"
+IMAGEKIT_CACHEFILE_DIR = "CACHE/images"
 
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
