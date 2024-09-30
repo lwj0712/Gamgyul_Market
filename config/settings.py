@@ -195,6 +195,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Django AllAuth 설정
 AUTHENTICATION_BACKENDS = [
+    "accounts.auth_backends.CustomAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
