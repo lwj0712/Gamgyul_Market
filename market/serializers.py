@@ -13,22 +13,24 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source="user.username")
+    average_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "user"]
+        fields = ["id", "name", "price", "user", "stock", "average_rating"]
 
 
 # Product Serializer
 class ProductSerializer(serializers.ModelSerializer):
-
-    # reviews = ReviewSerializer(many=True, read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    username = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id",
             "name",
+            "username",
             "price",
             "description",
             "stock",
@@ -37,9 +39,12 @@ class ProductSerializer(serializers.ModelSerializer):
             "harvest_date",
             "created_at",
             "updated_at",
+            "average_rating",
             # "images",
-            # "reviews",  # 상품 이미지와 리뷰도 포함
         ]
+
+    def get_username(self, obj):
+        return obj.user.username
 
 
 # ProductImage Serializer

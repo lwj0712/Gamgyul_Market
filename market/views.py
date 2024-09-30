@@ -1,9 +1,15 @@
 from rest_framework import generics, permissions
 from .models import Product, ProductImage, Review
 from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Avg
+from rest_framework.renderers import TemplateHTMLRenderer
+from django.http import JsonResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.urls import reverse
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -14,25 +20,59 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.annotate(average_rating=Avg("reviews__rating")).order_by(
+        "-created_at"
+    )
     serializer_class = ProductListSerializer
+    renderer_classes = [TemplateHTMLRenderer]  # HTML 렌더링 설정
+    template_name = "market/product_list.html"  # 사용할 템플릿 경로
+
+    def get(self, request, *args, **kwargs):
+        products = self.get_queryset()
+        return Response({"products": products})
 
 
-class ProductCreateView(generics.CreateAPIView):
+class ProductCreateView(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_create.html"  # 템플릿 경로 지정
 
-    def perform_create(self, serializer):
-        product = serializer.save(user=self.request.user)
-        images = self.request.FILES.getlist("image_urls")
-        for image in images:
-            ProductImage.objects.create(product=product, image_urls=image)
+    def get(self, request, *args, **kwargs):
+        # GET 요청 시, 빈 폼을 렌더링
+        return Response({"serializer": self.get_serializer()})
+
+    def post(self, request, *args, **kwargs):
+        # POST 요청을 처리하여 상품을 생성
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            product = serializer.save(user=self.request.user)
+            images = request.FILES.getlist("image_urls")
+
+            if len(images) > 5:
+                return Response(
+                    {"error": "최대 5장까지만 이미지를 업로드할 수 있습니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            for image in images:
+                ProductImage.objects.create(product=product, image_urls=image)
+
+            # 생성 후 상세 페이지로 리디렉션
+            success_url = reverse("product-detail", kwargs={"id": product.id})
+            return HttpResponseRedirect(success_url)
+
+        # 유효성 검사 실패 시 폼을 다시 렌더링
+        return Response({"serializer": serializer}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.annotate(average_rating=Avg("reviews__rating"))
     serializer_class = ProductSerializer
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "market/product_detail.html"
     lookup_field = "id"
 
     def get(self, request, *args, **kwargs):
@@ -48,12 +88,31 @@ class ProductDetailView(generics.RetrieveAPIView):
         )
 
     def post(self, request, *args, **kwargs):
-        product = self.get_object()
-        serializer = ReviewSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user, product=product)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            product = self.get_object()
+            content = request.POST.get("content")
+            rating = request.POST.get("rating")
+
+            # 리뷰 생성
+            review = Review.objects.create(
+                product=product, user=request.user, content=content, rating=rating
+            )
+
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": "Review created successfully",
+                    "data": {
+                        "id": review.id,
+                        "user": review.user.username,
+                        "content": review.content,
+                        "rating": review.rating,
+                        "created_at": review.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    },
+                }
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 class ProductUpdateView(generics.UpdateAPIView):
@@ -79,6 +138,17 @@ class ProductDeleteView(generics.DestroyAPIView):
 class IsReviewOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
+
+
+class ReviewCreateView(generics.CreateAPIView):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs["product_id"]  # URL에서 product_id를 가져옵니다.
+        product = get_object_or_404(Product, id=product_id)
+        serializer.save(user=self.request.user, product=product)
 
 
 class ReviewDeleteView(generics.DestroyAPIView):
