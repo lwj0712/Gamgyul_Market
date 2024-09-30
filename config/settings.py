@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "dj_rest_auth.registration",
     "allauth.socialaccount.providers.google",  # Google 로그인을 사용할 경우
-    "drf_yasg",
+    "drf-spectacular",
     "corsheaders",
     "imagekit",
     "crispy_forms",
@@ -152,6 +152,13 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# drf_spectacular swagger 세팅
+SPECTACULAR_SETTINGS = {
+    "TITLE": "감귤마켓 API",
+    "DESCRIPTION": "감귤마켓은 instagram 기반으로 감귤을 거래할 수 있는 웹입니다.",
 }
 
 # JWT 설정
