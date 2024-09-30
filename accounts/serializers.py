@@ -36,10 +36,20 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True, required=True, validators=[validate_password]
     )
     social_accounts = SocialAccountSerializer(many=True, read_only=True)
+    profile_image_thumbnail = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
-        fields = "__all__"
+        fields = (
+            "id",
+            "username",
+            "email",
+            "password",
+            "nickname",
+            "bio",
+            "profile_image",
+            "profile_image_thumbnail",
+        )
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
@@ -50,34 +60,6 @@ class UserSerializer(serializers.ModelSerializer):
             "longitude": {"required": False},
             "temperature": {"read_only": True},
         }
-
-    def validate_profile_image(self, value):
-        if value:
-            # 파일 크기 제한
-            if value.size > settings.MAX_PROFILE_IMAGE_SIZE:
-                raise ValidationError(
-                    f"이미지 파일 크기는 {settings.MAX_PROFILE_IMAGE_SIZE / (1024 * 1024)}MB를 초과할 수 없습니다."
-                )
-
-            # 이미지 크기 제한
-            width, height = get_image_dimensions(value)
-            if (
-                width > settings.MAX_PROFILE_IMAGE_WIDTH
-                or height > settings.MAX_PROFILE_IMAGE_HEIGHT
-            ):
-                raise ValidationError(
-                    f"이미지 크기는 {settings.MAX_PROFILE_IMAGE_WIDTH}x{settings.MAX_PROFILE_IMAGE_HEIGHT} 픽셀을 초과할 수 없습니다."
-                )
-
-            # 파일 확장자 제한
-            allowed_extensions = settings.ALLOWED_PROFILE_IMAGE_EXTENSIONS
-            ext = os.path.splitext(value.name)[1].lower()
-            if ext not in allowed_extensions:
-                raise ValidationError(
-                    f"허용되는 이미지 형식은 {', '.join(allowed_extensions)}입니다."
-                )
-
-        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
@@ -266,7 +248,13 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["nickname", "bio", "email", "profile_image"]
+        fields = [
+            "nickname",
+            "bio",
+            "email",
+            "profile_image",
+            "profile_image_thumbnail",
+        ]
         extra_kwargs = {
             "email": {"required": False},
             "profile_image": {"required": False},
@@ -276,34 +264,6 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         # 현재 사용자를 제외한 유저들의 email 체크
         if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
             raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
-        return value
-
-    def validate_profile_image(self, value):
-        if value:
-            # 파일 크기 제한
-            if value.size > settings.MAX_PROFILE_IMAGE_SIZE:
-                raise ValidationError(
-                    f"이미지 파일 크기는 {settings.MAX_PROFILE_IMAGE_SIZE / (1024 * 1024)}MB를 초과할 수 없습니다."
-                )
-
-            # 이미지 크기 제한
-            width, height = get_image_dimensions(value)
-            if (
-                width > settings.MAX_PROFILE_IMAGE_WIDTH
-                or height > settings.MAX_PROFILE_IMAGE_HEIGHT
-            ):
-                raise ValidationError(
-                    f"이미지 크기는 {settings.MAX_PROFILE_IMAGE_WIDTH}x{settings.MAX_PROFILE_IMAGE_HEIGHT} 픽셀을 초과할 수 없습니다."
-                )
-
-            # 파일 확장자 제한
-            allowed_extensions = settings.ALLOWED_PROFILE_IMAGE_EXTENSIONS
-            ext = os.path.splitext(value.name)[1].lower()
-            if ext not in allowed_extensions:
-                raise ValidationError(
-                    f"허용되는 이미지 형식은 {', '.join(allowed_extensions)}입니다."
-                )
-
         return value
 
     def update(self, instance, validated_data):
