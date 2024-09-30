@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
 from django.contrib.auth.tokens import (
@@ -92,7 +94,7 @@ class LogoutView(APIView):
 
 class PasswordChangeView(generics.UpdateAPIView):
     """
-    비밀번호 변경 api view
+    비밀번호 변경 API View
     serializer 유효성 검사 후 저장
     저장 후 로그아웃 기능
     """
@@ -113,7 +115,7 @@ class PasswordChangeView(generics.UpdateAPIView):
 
 class GoogleLoginView(SocialLoginView):
     """
-    google 로그인 담당 처리 view
+    google 로그인 담당 처리 View
     settings에 callbacks url 설정
     """
 
@@ -124,7 +126,7 @@ class GoogleLoginView(SocialLoginView):
 
 class GoogleLoginURLView(APIView):
     """
-    Google 로그인 URL API view
+    Google 로그인 URL API View
     """
 
     permission_classes = [AllowAny]
@@ -147,7 +149,7 @@ class GoogleLoginURLView(APIView):
 
 class GoogleCallbackView(APIView):
     """
-    Google callback view
+    Google callback API View
     """
 
     permission_classes = [AllowAny]
@@ -163,7 +165,7 @@ class GoogleCallbackView(APIView):
 
 class UserDeactivateView(APIView):
     """
-    계정 비활성화 API view
+    계정 비활성화 API View
     user.is_active = False로 계정 로그인 불가
     이후 계정을 다시 활성화 가능
     비활성화 유저 로그아웃 처리
@@ -184,7 +186,7 @@ class UserDeactivateView(APIView):
 
 class RequestReactivationView(APIView):
     """
-    재활성화 요청 처리 api view
+    재활성화 요청 처리 API View
     """
 
     def post(self, request):
@@ -223,7 +225,7 @@ class RequestReactivationView(APIView):
 
 class ActivateAccountView(APIView):
     """
-    유저 활성화 api view
+    유저 활성화 API View
     전달받은 uid 디코딩
     토큰 유효성 검사 이후 활성화 True로 바꿈
     """
@@ -253,7 +255,7 @@ class ActivateAccountView(APIView):
 
 class UserDeleteView(APIView):
     """
-    계정 삭제 API view
+    계정 삭제 API View
     """
 
     permission_classes = [IsAuthenticated]

@@ -1,6 +1,8 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from accounts.serializers import (
@@ -86,7 +88,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
 
 class FollowView(generics.CreateAPIView):
     """
-    팔로우 api view
+    팔로우 API View
     follow serializer 사용
     create 메서드로 팔로우 기능 구현
     get_or_create로 중복 제거
@@ -109,7 +111,7 @@ class FollowView(generics.CreateAPIView):
 
 class UnfollowView(generics.DestroyAPIView):
     """
-    언팔로우 api view
+    언팔로우 API View
     destoryAPIView로 DELETE 요청 처리
     """
 
@@ -130,7 +132,7 @@ class UnfollowView(generics.DestroyAPIView):
 
 class ProfileSearchView(generics.ListAPIView):
     """
-    프로필 검색 api view
+    프로필 검색 API View
     """
 
     serializer_class = ProfileSearchSerializer

@@ -23,9 +23,6 @@ class SocialAccountSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """
     회원가입 serializer
-    password2 필드 제거: 비밀번호 확인은 프론트엔드에서 처리
-    유효성 검사 로직 제거
-    소셜 계정 정보 추가
     """
 
     password = serializers.CharField(
@@ -46,6 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
             "profile_image",
             "profile_image_thumbnail",
             "social_accounts",
+            "temperature",
         )
         extra_kwargs = {
             "password": {"write_only": True},
@@ -53,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
             "nickname": {"required": True},
             "bio": {"required": False},
             "profile_image": {"required": False},
+            "profile_image_thumbnail": {"required": False},
             "latitude": {"required": False},
             "longitude": {"required": False},
             "temperature": {"read_only": True},
@@ -120,6 +119,10 @@ class FollowSerializer(serializers.ModelSerializer):
 
 
 class CommentedPostSerializer(serializers.ModelSerializer):
+    """
+    내가 단 댓글의 포스트 정보
+    """
+
     class Meta:
         model = Post
         fields = ("id", "content", "created_at")
@@ -240,7 +243,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """
     프로필 업데이트 serializer
-    nickname, bio, email, profile_image 변경
     """
 
     class Meta:
@@ -306,6 +308,10 @@ class PrivacySettingsSerializer(serializers.ModelSerializer):
 
 
 class ProfileSearchSerializer(serializers.ModelSerializer):
+    """
+    프로필 검색 serializer
+    """
+
     class Meta:
         model = User
         fields = ["id", "username", "nickname", "profile_image"]

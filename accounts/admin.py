@@ -4,6 +4,10 @@ from .models import User, SocialAccount, Follow, PrivacySettings
 
 
 class PrivacySettingsInline(admin.StackedInline):
+    """
+    프로필 정보 administration
+    """
+
     model = PrivacySettings
     can_delete = False
     verbose_name_plural = "Privacy Settings"
