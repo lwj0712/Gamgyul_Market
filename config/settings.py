@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "dj_rest_auth.registration",
     "allauth.socialaccount.providers.google",  # Google 로그인을 사용할 경우
-    "drf-spectacular",
+    "drf_spectacular",
     "corsheaders",
     "imagekit",
     "crispy_forms",
