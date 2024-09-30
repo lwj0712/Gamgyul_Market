@@ -1,6 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, SocialAccount, Follow
+from .models import User, SocialAccount, Follow, PrivacySettings
+
+
+class PrivacySettingsInline(admin.StackedInline):
+    model = PrivacySettings
+    can_delete = False
+    verbose_name_plural = "Privacy Settings"
 
 
 class CustomUserAdmin(UserAdmin):
@@ -20,6 +26,7 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
+    inlines = (PrivacySettingsInline,)
 
 
 admin.site.register(User, CustomUserAdmin)
@@ -35,3 +42,19 @@ class SocialAccountAdmin(admin.ModelAdmin):
 class FollowAdmin(admin.ModelAdmin):
     list_display = ("follower", "following", "created_at")
     search_fields = ("follower__username", "following__username")
+
+
+@admin.register(PrivacySettings)
+class PrivacySettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "follower_can_see_email",
+        "following_can_see_email",
+        "others_can_see_email",
+    )
+    list_filter = (
+        "follower_can_see_email",
+        "following_can_see_email",
+        "others_can_see_email",
+    )
+    search_fields = ("user__username", "user__email")

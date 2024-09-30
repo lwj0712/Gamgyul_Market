@@ -1,11 +1,25 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
+from imagekit.models import ProcessedImageField, ImageSpecField
+from imagekit.processors import ResizeToFill, Thumbnail
 
 
 class User(AbstractUser):
-    profile_image = models.ImageField(
-        upload_to="profile_images/", null=True, blank=True
+    profile_image = ProcessedImageField(
+        upload_to="profile_images",
+        processors=[ResizeToFill(400, 400)],
+        format="JPEG",
+        options={"quality": 60},
+        null=True,
+        blank=True,
+    )
+    profile_image_thumbnail = ImageSpecField(
+        source="profile_image",
+        processors=[Thumbnail(100, 100)],
+        format="JPEG",
+        options={"quality": 60},
     )
     temperature = models.FloatField(
         default=36.5, validators=[MinValueValidator(0), MaxValueValidator(100)]
@@ -48,3 +62,35 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} follows {self.following.username}"
+
+
+class PrivacySettings(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="privacy_settings",
+    )
+
+    # 팔로워에게 공개될 정보
+    follower_can_see_email = models.BooleanField(default=False)
+    follower_can_see_bio = models.BooleanField(default=True)
+    follower_can_see_posts = models.BooleanField(default=True)
+    follower_can_see_following_list = models.BooleanField(default=True)
+    follower_can_see_follower_list = models.BooleanField(default=True)
+
+    # 팔로잉에게 공개될 정보
+    following_can_see_email = models.BooleanField(default=False)
+    following_can_see_bio = models.BooleanField(default=True)
+    following_can_see_posts = models.BooleanField(default=True)
+    following_can_see_following_list = models.BooleanField(default=True)
+    following_can_see_follower_list = models.BooleanField(default=True)
+
+    # 둘 다 아닌 사람들에게 공개될 정보
+    others_can_see_email = models.BooleanField(default=False)
+    others_can_see_bio = models.BooleanField(default=True)
+    others_can_see_posts = models.BooleanField(default=True)
+    others_can_see_following_list = models.BooleanField(default=False)
+    others_can_see_follower_list = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username}'s Privacy Settings"

@@ -4,22 +4,22 @@ from . import views
 app_name = "chat"
 
 urlpatterns = [
-    path("room/<str:room_name>/", views.ChatRoomView.as_view(), name="room"),
-    path("create/", views.CreateChatRoomView.as_view(), name="create_room"),
-    path("", views.ChatRoomListView.as_view(), name="chatroom_list"),
+    path("", views.ChatRoomListView.as_view(), name="room_list"),
+    path("create/", views.ChatRoomCreateView.as_view(), name="room_create"),
+    path("<uuid:room_id>/", views.ChatRoomDetailView.as_view(), name="room_detail"),
     path(
-        "room/<str:room_name>/leave/", views.LeaveRoomView.as_view(), name="leave_room"
-    ),
-    # API endpoints
-    path("api/user_rooms/", views.GetUserRoomsView.as_view(), name="get_user_rooms"),
-    path(
-        "api/chat_messages/<str:room_name>/",
-        views.GetChatMessagesView.as_view(),
-        name="get_chat_messages",
+        "<uuid:room_id>/messages/",
+        views.MessageListView.as_view(),
+        name="message_list",
     ),
     path(
-        "api/message/<str:room_name>/",
-        views.CreateMessageView.as_view(),
-        name="create_message",
+        "<uuid:room_id>/messages/send/",
+        views.MessageCreateView.as_view(),
+        name="message_create",
+    ),
+    path(
+        "<uuid:room_id>/leave/",
+        views.ChatRoomLeaveView.as_view(),
+        name="room_leave",
     ),
 ]
