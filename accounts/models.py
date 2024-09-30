@@ -2,11 +2,24 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
+from imagekit.models import ProcessedImageField, ImageSpecField
+from imagekit.processors import ResizeToFill, Thumbnail
 
 
 class User(AbstractUser):
-    profile_image = models.ImageField(
-        upload_to="profile_images/", null=True, blank=True
+    profile_image = ProcessedImageField(
+        upload_to="profile_images",
+        processors=[ResizeToFill(400, 400)],
+        format="JPEG",
+        options={"quality": 60},
+        null=True,
+        blank=True,
+    )
+    profile_image_thumbnail = ImageSpecField(
+        source="profile_image",
+        processors=[Thumbnail(100, 100)],
+        format="JPEG",
+        options={"quality": 60},
     )
     temperature = models.FloatField(
         default=36.5, validators=[MinValueValidator(0), MaxValueValidator(100)]
