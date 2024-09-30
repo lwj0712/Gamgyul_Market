@@ -4,7 +4,7 @@
     <title>채팅방</title>
 </head>
 <body>
-    <h1>채팅방 : {{ room.name }}</h1>
+    <h1>{{ room_name }}</h1>
     <div id="chat-log" style="border: 1px solid #ccc; padding: 10px; width: 50%; height: 300px; overflow-y: scroll; background-color: #f9f9f9;">
         {% for message in messages %}
             <strong>{{ message.user.username }}:</strong> {{ message.content }} <br>

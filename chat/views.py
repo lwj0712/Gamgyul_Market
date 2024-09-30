@@ -24,6 +24,12 @@ class ChatRoomView(LoginRequiredMixin, TemplateView):
         room_name = self.kwargs["room_name"]
         room = get_object_or_404(ChatRoom, name=room_name)
         messages = Message.objects.filter(room=room).order_by("sent_at")
+        participant = (
+            ChatParticipant.objects.filter(room=room)
+            .exclude(user=self.request.user)
+            .first()
+        )
+        context["room_name"] = f"{participant.user.username}님과의 대화"
         context["room"] = room
         context["messages"] = messages
         return context
@@ -39,16 +45,25 @@ class CreateChatRoomView(LoginRequiredMixin, View):
             "target_user"
         )  # 상대방 유저 ID 또는 username 받아오기
         if not target_user:
-            return self.form_invalid(
-                "상대방을 선택해야 합니다."
-            )  # 상대방이 선택되지 않았을 때
+            return render(
+                request, self.template_name, {"error": "상대방을 선택해야 합니다."}
+            )
 
         try:
             # 존재하는 사용자인지 확인
             target_user_instance = User.objects.get(username=target_user)
         except User.DoesNotExist:
+            # 존재하지 않는 사용자인 경우 템플릿에 에러 메시지 전달
             return render(
                 request, self.template_name, {"error": "존재하지 않는 사용자입니다."}
+            )
+
+        # 자기 자신의 이름을 입력했는지 확인
+        if target_user_instance == request.user:
+            return render(
+                request,
+                self.template_name,
+                {"error": "다른 사용자의 이름을 입력해주세요."},
             )
 
         # 사용자 간 고유한 방을 만들기 위해 이름 생성
@@ -79,9 +94,28 @@ class ChatRoomListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # 사용자가 참여한 채팅방을 가져오는지 확인
-        return ChatParticipant.objects.filter(user=self.request.user).select_related(
-            "room"
-        )
+        chat_participants = ChatParticipant.objects.filter(
+            user=self.request.user
+        ).select_related("room")
+
+        chat_rooms = []
+        for participant in chat_participants:
+            room = participant.room
+            # 상대방의 이름을 찾기
+            other_user = [
+                p.user.username
+                for p in room.chatparticipant_set.exclude(user=self.request.user)
+            ]
+            # 상대방의 이름이 존재할 경우
+            if other_user:
+                chat_rooms.append(
+                    {
+                        "room": room,
+                        "room_name": f"{other_user[0]}님과의 대화",
+                    }
+                )
+
+        return chat_rooms
 
 
 # 메시지 생성 API (POST 요청)
