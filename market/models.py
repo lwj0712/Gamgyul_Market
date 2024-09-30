@@ -32,7 +32,7 @@ class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, related_name="images", on_delete=models.CASCADE
     )  # product_id
-    image_urls = models.ImageField(upload_to="products/")  # 이미지 URL
+    image_urls = models.ImageField(upload_to="media/products/")  # 이미지 URL
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
