@@ -108,6 +108,14 @@ class MessageReadView(generics.UpdateAPIView):
         message = get_object_or_404(
             Message, id=self.kwargs["message_id"], chat_room_id=self.kwargs["room_id"]
         )
-        message.is_read = True
-        message.save()
-        return Response({"status": "읽음 표시됨"}, status=200)
+
+        # 메시지 발신자와 현재 요청한 사용자가 다를 때만 is_read 업데이트
+        if message.sender != request.user:
+            message.is_read = True
+            message.save()
+            return Response({"status": "읽음 표시됨"}, status=200)
+        else:
+            return Response(
+                {"error": "자신이 보낸 메시지는 읽음 상태로 변경할 수 없습니다."},
+                status=400,
+            )
