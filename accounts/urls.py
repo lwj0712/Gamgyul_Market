@@ -17,6 +17,12 @@ urlpatterns = [
     path(
         "google/callback/", account.GoogleCallbackView.as_view(), name="google_callback"
     ),
+    # Google OAuth2 Test View
+    path(
+        "google-login-test/",
+        account.GoogleLoginTestView.as_view(),
+        name="google_login_test",
+    ),
     # 계정 관리
     path("deactivate/", account.UserDeactivateView.as_view(), name="user_deactivate"),
     path("delete/", account.UserDeleteView.as_view(), name="user_delete"),

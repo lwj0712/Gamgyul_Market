@@ -2,6 +2,12 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from drf_spectacular.utils import (
+    extend_schema_serializer,
+    OpenApiParameter,
+    OpenApiExample,
+)
+from drf_spectacular.types import OpenApiTypes
 from allauth.socialaccount.models import SocialAccount
 from insta.models import Comment, Post
 from market.models import Product
@@ -48,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
-            "nickname": {"required": True},
+            "nickname": {"required": False},
             "bio": {"required": False},
             "profile_image": {"required": False},
             "profile_image_thumbnail": {"required": False},
