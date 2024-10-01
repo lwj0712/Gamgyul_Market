@@ -28,7 +28,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         participants = validated_data.pop("participants")
 
         if len(participants) != 2:
-            raise serializers.ValidationError("자신과의 채팅은 할 수 없습니다.")
+            raise serializers.ValidationError("1대1 채팅만 가능합니다.")
 
         # 참가자 ID를 정렬하여 room_key 생성
         participant_ids = sorted([str(participant.id) for participant in participants])

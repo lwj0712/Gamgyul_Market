@@ -36,7 +36,7 @@ class ChatRoomCreateView(generics.CreateAPIView):
         participants = list(set(participants + [request.user.username]))
 
         if len(participants) != 2:
-            return Response({"error": "자신과의 채팅은 할 수 없습니다."}, status=400)
+            return Response({"error": "1대1 채팅만 가능합니다."}, status=400)
 
         # 새로운 채팅방 생성
         serializer = self.get_serializer(data={"participants": participants})
