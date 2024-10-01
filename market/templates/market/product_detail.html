@@ -7,6 +7,10 @@
 </head>
 <body>
     <h1>{{ product.name }}</h1>
+
+    {% for image_url in product.images %}
+        <img src="{{ image_url }}" alt="{{ product.name }}" style="max-width: 100%; height: auto;">
+    {% endfor %}
     <p>작성자 : {{ product.username }}</p>
     <p>가격: {{ product.price }}원</p>
     <p>별점: {{ product.average_rating }}</p>

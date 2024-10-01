@@ -1,6 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Avg
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
+from django.utils.text import slugify
+import uuid
 
 
 # Product Model
@@ -27,12 +31,21 @@ class Product(models.Model):
         return self.reviews.aggregate(Avg("rating"))["rating__avg"]
 
 
-# ProductImage Model
+def upload_to(instance, filename):
+    ext = filename.split(".")[-1]
+    return f"products/{uuid.uuid4()}.{ext}"
+
+
 class ProductImage(models.Model):
     product = models.ForeignKey(
-        Product, related_name="images", on_delete=models.CASCADE
-    )  # product_id
-    image_urls = models.ImageField(upload_to="media/products/")  # 이미지 URL
+        "Product", related_name="images", on_delete=models.CASCADE
+    )
+    image = ProcessedImageField(
+        upload_to=upload_to,
+        processors=[ResizeToFit(1920, 1080)],  # 최대 크기 지정
+        format="JPEG",
+        options={"quality": 100},
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

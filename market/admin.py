@@ -33,6 +33,6 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ("product", "image_urls", "created_at")
+    list_display = ("product", "image", "created_at")
     list_filter = ("created_at",)
     search_fields = ("product__name",)

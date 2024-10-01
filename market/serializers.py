@@ -24,6 +24,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
     username = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -40,15 +41,23 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "average_rating",
-            # "images",
+            "images",
         ]
 
     def get_username(self, obj):
         return obj.user.username
+
+    def get_images(self, obj):
+        request = self.context.get("request")
+        return (
+            [request.build_absolute_uri(image.image.url) for image in obj.images.all()]
+            if request
+            else []
+        )
 
 
 # ProductImage Serializer
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ["id", "product", "image_urls"]
+        fields = ["id", "product", "image"]

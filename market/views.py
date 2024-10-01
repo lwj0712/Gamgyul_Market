@@ -48,7 +48,7 @@ class ProductCreateView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             product = serializer.save(user=self.request.user)
-            images = request.FILES.getlist("image_urls")
+            images = request.FILES.getlist("image")
 
             if len(images) > 5:
                 return Response(
@@ -57,7 +57,7 @@ class ProductCreateView(generics.GenericAPIView):
                 )
 
             for image in images:
-                ProductImage.objects.create(product=product, image_urls=image)
+                ProductImage.objects.create(product=product, image=image)
 
             # 생성 후 상세 페이지로 리디렉션
             success_url = reverse("product-detail", kwargs={"id": product.id})
@@ -69,17 +69,32 @@ class ProductCreateView(generics.GenericAPIView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.annotate(average_rating=Avg("reviews__rating"))
     serializer_class = ProductSerializer
     renderer_classes = [TemplateHTMLRenderer]
     template_name = "market/product_detail.html"
     lookup_field = "id"
 
+    def get_queryset(self):
+        return Product.objects.annotate(
+            average_rating=Avg("reviews__rating")
+        ).prefetch_related("images")
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        # 디버깅: 이미지 URL 출력
+        for image in instance.images.all():
+            print(f"Image URL: {image.image.url}")
+
+        return Response(data)
+
     def get(self, request, *args, **kwargs):
         product = self.get_object()
         reviews = Review.objects.filter(product=product)
         review_serializer = ReviewSerializer(reviews, many=True)
-        product_serializer = self.get_serializer(product)
+        product_serializer = self.get_serializer(product, context={"request": request})
         return Response(
             {
                 "product": product_serializer.data,
@@ -144,9 +159,9 @@ class ProductUpdateView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         product = serializer.save()
-        images = self.request.FILES.getlist("image_urls")
+        images = self.request.FILES.getlist("image")
         for image in images:
-            ProductImage.objects.create(product=product, image_urls=image)
+            ProductImage.objects.create(product=product, image=image)
 
 
 class ProductDeleteView(generics.DestroyAPIView):
