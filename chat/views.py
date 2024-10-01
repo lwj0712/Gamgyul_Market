@@ -36,7 +36,7 @@ class ChatRoomCreateView(generics.CreateAPIView):
         participants = list(set(participants + [request.user.username]))
 
         if len(participants) != 2:
-            return Response({"error": "1대1 채팅만 가능합니다."}, status=400)
+            return Response({"error": "자신과의 채팅은 할 수 없습니다."}, status=400)
 
         # 새로운 채팅방 생성
         serializer = self.get_serializer(data={"participants": participants})
@@ -71,7 +71,7 @@ class ChatRoomLeaveView(generics.DestroyAPIView):
         if not chat_room.participants.exists():
             chat_room.delete()
 
-        return Response(status=204)
+        return Response({"message": "채팅방에서 나갔습니다."}, status=204)
 
 
 class MessageListView(generics.ListAPIView):
@@ -108,6 +108,14 @@ class MessageReadView(generics.UpdateAPIView):
         message = get_object_or_404(
             Message, id=self.kwargs["message_id"], chat_room_id=self.kwargs["room_id"]
         )
-        message.is_read = True
-        message.save()
-        return Response({"status": "읽음 표시됨"}, status=200)
+
+        # 메시지 발신자와 현재 요청한 사용자가 다를 때만 is_read 업데이트
+        if message.sender != request.user:
+            message.is_read = True
+            message.save()
+            return Response({"status": "읽음 표시됨"}, status=200)
+        else:
+            return Response(
+                {"error": "자신이 보낸 메시지는 읽음 상태로 변경할 수 없습니다."},
+                status=400,
+            )
