@@ -1,15 +1,11 @@
-import os
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.exceptions import ValidationError
-from django.core.files.images import get_image_dimensions
 from allauth.socialaccount.models import SocialAccount
-
-
-# from insta.models import Comment, Post
+from insta.models import Comment, Post
 from market.models import Product
+from .models import PrivacySettings
 
 User = get_user_model()
 
@@ -36,10 +32,21 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True, required=True, validators=[validate_password]
     )
     social_accounts = SocialAccountSerializer(many=True, read_only=True)
+    profile_image_thumbnail = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
-        fields = "__all__"
+        fields = (
+            "id",
+            "username",
+            "email",
+            "password",
+            "nickname",
+            "bio",
+            "profile_image",
+            "profile_image_thumbnail",
+            "social_accounts",
+        )
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
@@ -99,15 +106,23 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
+    """
+    팔로우 serializer
+    """
+
+    id = serializers.CharField(read_only=True)
+    nickname = serializers.CharField(read_only=True)
+    profile_image = serializers.ImageField(read_only=True)
+
     class Meta:
         model = User
-        fields = ("id", "username", "nickname", "profile_image")
+        fields = ("id", "nickname", "profile_image")
 
 
-# class CommentedPostSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Post
-#         fields = ("id", "content", "created_at")
+class CommentedPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ("id", "content", "created_at")
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -126,11 +141,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     기본 정보, 마켓 정보, 팔로우 관계와 수, 댓글 단 post 내용
     """
 
+    # get_<field명> 메서드로 데이터 직렬화
     followers = serializers.SerializerMethodField()
     following = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
-    # commented_posts = serializers.SerializerMethodField()
+    commented_posts = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
 
     class Meta:
@@ -163,16 +179,62 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_following_count(self, obj):
         return obj.following.count()
 
-    # def get_commented_posts(self, obj):
-    #     comments = (
-    #         Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
-    #     )
-    #     posts = Post.objects.filter(id__in=comments)
-    #     return CommentedPostSerializer(posts, many=True).data
+    def get_commented_posts(self, obj):
+        comments = (
+            Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
+        )
+        posts = Post.objects.filter(id__in=comments)
+        return CommentedPostSerializer(posts, many=True).data
 
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True).data
+
+    def get_viewer_type(self, viewer, profile_owner):
+        # 프로필 열람 타입 구분 메서드
+        is_follower = viewer.following.filter(following=profile_owner).exists()
+        is_following = viewer.followers.filter(follower=profile_owner).exists()
+
+        if is_follower and is_following:
+            return "follower"  # 팔로워 기준 값 리턴
+        elif is_follower:
+            return "follower"
+        elif is_following:
+            return "following"
+        else:
+            return "others"
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and request.user != instance:
+            viewer_type = self.get_viewer_type(request.user, instance)
+            privacy_settings = PrivacySettings.objects.get_or_create(user=instance)[0]
+
+            fields_to_check = {
+                "email": f"{viewer_type}_can_see_email",
+                "bio": f"{viewer_type}_can_see_bio",
+                "followers": f"{viewer_type}_can_see_follower_list",
+                "following": f"{viewer_type}_can_see_following_list",
+                "commented_posts": f"{viewer_type}_can_see_posts",
+                "products": f"{viewer_type}_can_see_posts",
+            }
+
+            for field, setting in fields_to_check.items():
+                if not getattr(privacy_settings, setting, True):
+                    data.pop(field, None)
+
+            # 항상 표시되어야 하는 필드들
+            always_visible = [
+                "id",
+                "username",
+                "nickname",
+                "profile_image",
+                "temperature",
+            ]
+            data = {k: v for k, v in data.items() if k in always_visible or k in data}
+
+        return data
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -183,39 +245,22 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["nickname", "bio", "email", "profile_image"]
+        fields = [
+            "nickname",
+            "bio",
+            "email",
+            "profile_image",
+            "profile_image_thumbnail",
+        ]
         extra_kwargs = {
             "email": {"required": False},
             "profile_image": {"required": False},
         }
 
     def validate_email(self, value):
-        # 현재 사용자르 제외한 유저들의 email 체크
+        # 현재 사용자를 제외한 유저들의 email 체크
         if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
             raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
-        return value
-
-    def validate_profile_image(self, value):
-        if value:
-            # 파일 크기 제한
-            if value.size > 2 * 1024 * 1024:
-                raise ValidationError("이미지 파일 크기는 2MB를 초과할 수 없습니다.")
-
-            # 이미지 크기 제한
-            width, height = get_image_dimensions(value)
-            if width > 1000 or height > 1000:
-                raise ValidationError(
-                    "이미지 크기는 1000x1000 픽셀을 초과할 수 없습니다."
-                )
-
-            # 파일 확장자 제한
-            allowed_extensions = [".jpg", ".jpeg", ".png", ".gif"]
-            ext = os.path.splitext(value.name)[1].lower()
-            if ext not in allowed_extensions:
-                raise ValidationError(
-                    "허용되는 이미지 형식은 JPG, JPEG, PNG, GIF입니다."
-                )
-
         return value
 
     def update(self, instance, validated_data):
@@ -228,10 +273,39 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
                 )  # 기존 프로필이 있다면 제거 후 생성
             instance.profile_image = profile_image
 
-        # Update other fields
+        # 다른 필드도 업데이트
         instance.nickname = validated_data.get("nickname", instance.nickname)
         instance.bio = validated_data.get("bio", instance.bio)
         instance.email = validated_data.get("email", instance.email)
 
         instance.save()
         return instance
+
+
+class PrivacySettingsSerializer(serializers.ModelSerializer):
+    """
+    프로필 설정 serializer
+    """
+
+    class Meta:
+        model = PrivacySettings
+        exclude = ("user",)
+
+    def get_visible_fields(self, viewer_type):
+        if viewer_type not in ["follower", "following", "others"]:
+            raise serializers.ValidationError("Invalid viewer type")
+
+        visible_fields = []
+        for field in self.Meta.model._meta.fields:
+            if field.name.startswith(f"{viewer_type}_can_see_") and getattr(
+                self.instance, field.name
+            ):
+                visible_fields.append(field.name.replace(f"{viewer_type}_can_see_", ""))
+
+        return visible_fields
+
+
+class ProfileSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "nickname", "profile_image"]

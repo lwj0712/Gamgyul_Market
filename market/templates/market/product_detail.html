@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail</title>
+</head>
+<body>
+    <h1>{{ product.name }}</h1>
+    <p>가격: {{ product.price }}원</p>
+    <p>별점: {{ product.average_rating }}</p>
+    <p>제품 설명: {{ product.description }}</p>
+    <p>재고: {{ product.stock }}개</p>
+    <p>품종: {{ product.variety }}</p>
+    <p>재배 지역: {{ product.growing_region }}</p>
+    <p>재배 일자: {{ product.harvest_date }}</p>
+
+    <h3>리뷰 작성</h3>
+    <form id="review-form" method="post" action="{% url 'product-detail' product.id %}">
+        {% csrf_token %}
+        <textarea name="content" rows="4" cols="50" placeholder="" required></textarea><br>
+        <label for="rating">별점:</label>
+        <select name="rating" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select><br>
+        <button type="submit">작성</button>
+    </form>
+
+    <h2>리뷰</h2>
+    <ul>
+        {% for review in reviews %}
+            <li>
+                <p>작성자: {{ review.user }}</p>
+                <p>별점: {{ review.rating }}</p>
+                <p>{{ review.content }}</p>
+                <p>작성일: {{ review.created_at }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <button onclick="window.location.href='{% url 'product-list' %}';">목록으로 돌아가기</button>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('review-form');
+            const reviewsList = document.querySelector('ul');  // 리뷰 목록을 감싸는 ul 요소
+
+            if (form) {
+                form.onsubmit = function(event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(this);
+                    const productId = "{{ product.id }}";
+                    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                    fetch(`/market/products/${productId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                        },
+                        body: formData,
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // 새 리뷰를 동적으로 추가
+                            const newReview = document.createElement('li');
+                            newReview.innerHTML = `
+                                <p>작성자: ${data.data.user}</p>
+                                <p>별점: ${data.data.rating}</p>
+                                <p>${data.data.content}</p>
+                                <p>작성일: ${data.data.created_at}</p>
+                            `;
+                            reviewsList.prepend(newReview);  // 리스트의 맨 앞에 새 리뷰 추가
+
+                            // 폼 초기화
+                            form.reset();
+                        } else {
+                            // 에러 처리
+                            console.error('Error:', data.message);
+                            alert('리뷰 등록에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('리뷰 등록 중 오류가 발생했습니다.');
+                    });
+                };
+            } else {
+                console.error('Review form not found');
+            }
+        });
+        </script>
+    
+    
+
+</body>
+</html>

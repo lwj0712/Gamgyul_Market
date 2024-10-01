@@ -20,12 +20,10 @@ from django.utils.encoding import (
 )
 from django.core.mail import send_mail  # 이메일 전송 기능
 from django.urls import reverse
-from .serializers import (
+from accounts.serializers import (
     UserSerializer,
     LoginSerializer,
-    ProfileSerializer,
     PasswordChangeSerializer,
-    ProfileUpdateSerializer,
 )
 
 User = get_user_model()
@@ -80,6 +78,39 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class LogoutView(APIView):
+    """
+    로그아웃 API View
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+        return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
+
+
+class PasswordChangeView(generics.UpdateAPIView):
+    """
+    비밀번호 변경 api view
+    serializer 유효성 검사 후 저장
+    저장 후 로그아웃 기능
+    """
+
+    serializer_class = PasswordChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        logout(request)
+        return Response(
+            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class GoogleLoginView(SocialLoginView):
     """
     google 로그인 담당 처리 view
@@ -93,7 +124,7 @@ class GoogleLoginView(SocialLoginView):
 
 class GoogleLoginURLView(APIView):
     """
-    Google login URL API view
+    Google 로그인 URL API view
     """
 
     permission_classes = [AllowAny]
@@ -128,61 +159,6 @@ class GoogleCallbackView(APIView):
         return Response(
             {"error": "코드를 찾을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class LogoutView(APIView):
-    """
-    로그아웃 API View
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        logout(request)
-        return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
-
-
-class ProfileDetailView(generics.RetrieveAPIView):
-    """
-    프로필 API view
-    profileserializer 사용
-    """
-
-    queryset = User.objects.all()
-    serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = "username"
-
-
-class ProfileUpdateView(generics.UpdateAPIView):
-    """
-    프로필 수정 API view
-    """
-
-    serializer_class = ProfileUpdateSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-    def update(self, request, *args, **kwargs):
-        # patch, put 요청 모두 처리
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        # serializer의 save() 메서드를 호출하여 데이터베이스에 변경사항을 저장
-        self.perform_update(serializer)
-
-        # 관련 객체들을 미리 가져왔을 때 쓰는 캐시, update되면 cache 비움(최적화)
-        if getattr(instance, "_prefetched_objects_cache", None):
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
-    def partial_update(self, request, *args, **kwargs):
-        kwargs["partial"] = True
-        return self.update(request, *args, **kwargs)
 
 
 class UserDeactivateView(APIView):
@@ -298,26 +274,5 @@ class UserDeleteView(APIView):
         user.delete()
         return Response(
             {"detail": "귀하의 계정이 완전히 삭제되었습니다."},
-            status=status.HTTP_200_OK,
-        )
-
-
-class PasswordChangeView(generics.UpdateAPIView):
-    """
-    비밀번호 변경 api view
-    serializer 유효성 검사 후 저장
-    저장 후 로그아웃 기능
-    """
-
-    serializer_class = PasswordChangeSerializer
-    permission_classes = [IsAuthenticated]
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        logout(request)
-        return Response(
-            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
             status=status.HTTP_200_OK,
         )
