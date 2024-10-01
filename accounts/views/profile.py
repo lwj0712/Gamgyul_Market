@@ -1,9 +1,16 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiExample,
+    OpenApiResponse,
+)
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from accounts.serializers import (
     FollowSerializer,
@@ -151,6 +158,79 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
     serializer_class = PrivacySettingsSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="프로필 보안 설정 조회",
+        description="현재 사용자의 프로필 보안 설정을 조회합니다.",
+        responses={
+            status.HTTP_200_OK: PrivacySettingsSerializer,
+            status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+        },
+        tags=["profile"],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="프로필 보안 설정 업데이트",
+        description="현재 사용자의 프로필 보안 설정을 업데이트합니다.",
+        request=PrivacySettingsSerializer,
+        responses={
+            status.HTTP_200_OK: PrivacySettingsSerializer,
+            status.HTTP_400_BAD_REQUEST: OpenApiTypes.OBJECT,
+            status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "Valid Input",
+                value={
+                    "follower_can_see_email": False,
+                    "follower_can_see_bio": True,
+                    "follower_can_see_posts": True,
+                    "follower_can_see_following_list": True,
+                    "follower_can_see_follower_list": True,
+                    "following_can_see_email": False,
+                    "following_can_see_bio": True,
+                    "following_can_see_posts": True,
+                    "following_can_see_following_list": True,
+                    "following_can_see_follower_list": True,
+                    "others_can_see_email": False,
+                    "others_can_see_bio": True,
+                    "others_can_see_posts": True,
+                    "others_can_see_following_list": False,
+                    "others_can_see_follower_list": False,
+                },
+                request_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="프로필 보안 설정 부분 업데이트",
+        description="현재 사용자의 프로필 보안 설정을 부분적으로 업데이트합니다.",
+        request=PrivacySettingsSerializer,
+        responses={
+            status.HTTP_200_OK: PrivacySettingsSerializer,
+            status.HTTP_400_BAD_REQUEST: OpenApiTypes.OBJECT,
+            status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "Valid Partial Input",
+                value={
+                    "follower_can_see_email": True,
+                    "others_can_see_posts": False,
+                },
+                request_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+
     def get_object(self):
         return PrivacySettings.objects.get_or_create(user=self.request.user)[0]
 
@@ -168,24 +248,151 @@ class FollowView(generics.CreateAPIView):
     팔로우 API View
     follow serializer 사용
     create 메서드로 팔로우 기능 구현
-    get_or_create로 중복 제거
+    get_or_create로 중복 팔로우 경우의 수 제거
+    존재하지 않는 사용자를 팔로우 불가
+    자기 자신을 팔로우 불가
     """
 
     serializer_class = FollowSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="사용자 팔로우",
+        description="특정 사용자를 팔로우합니다. 자기 자신을 팔로우하거나 이미 팔로우한 사용자를 다시 팔로우할 수 없습니다.",
+        parameters=[
+            OpenApiParameter(
+                name="pk",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description="팔로우할 사용자의 ID",
+            ),
+        ],
+        responses={
+            status.HTTP_201_CREATED: ProfileSerializer,
+            status.HTTP_400_BAD_REQUEST: OpenApiTypes.OBJECT,
+            status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+            status.HTTP_404_NOT_FOUND: OpenApiTypes.OBJECT,
+            status.HTTP_500_INTERNAL_SERVER_ERROR: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "성공 응답",
+                value={
+                    "id": 2,
+                    "username": "user2",
+                    "nickname": "User Two",
+                    "bio": "Hello, I'm User Two",
+                    "profile_image": "http://example.com/media/profile_images/user2.jpg",
+                    "temperature": 36.5,
+                    "followers": [
+                        {
+                            "id": "1",
+                            "nickname": "User One",
+                            "profile_image": "http://example.com/media/profile_images/user1.jpg",
+                        }
+                    ],
+                    "following": [],
+                    "followers_count": 1,
+                    "following_count": 0,
+                    "commented_posts": [],
+                    "products": [],
+                },
+                response_only=True,
+                status_codes=["201"],
+            ),
+            OpenApiExample(
+                "Error: Self Follow",
+                value={"detail": "자기 자신을 팔로우할 수 없습니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+            OpenApiExample(
+                "Error: Already Following",
+                value={"detail": "이미 팔로우한 사용자입니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+            OpenApiExample(
+                "Error: User Not Found",
+                value={"detail": "유저가 존재하지 않습니다."},
+                response_only=True,
+                status_codes=["404"],
+            ),
+            OpenApiExample(
+                "Error: Server Error",
+                value={"detail": "팔로우 처리 중 오류가 발생했습니다."},
+                response_only=True,
+                status_codes=["500"],
+            ),
+        ],
+        tags=["profile"],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
     def create(self, request, *args, **kwargs):
-        following_id = self.kwargs["pk"]
-        following_user = User.objects.get(id=following_id)
-        Follow.objects.get_or_create(
-            follower=self.request.user, following=following_user
-        )
-        profile_serializer = ProfileSerializer(
-            following_user, context={"request": request}
-        )
-        return Response(profile_serializer.data)
+        try:
+            following_id = self.kwargs["pk"]
+
+            # 팔로우할 사용자가 존재하는지 확인
+            following_user = get_object_or_404(User, id=following_id)
+
+            # 자기 자신을 팔로우하려는 경우 예외 처리
+            if request.user.id == following_user.id:
+                return Response(
+                    {"detail": "자기 자신을 팔로우할 수 없습니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 이미 팔로우한 경우 예외 처리
+            if Follow.objects.filter(
+                follower=request.user, following=following_user
+            ).exists():
+                return Response(
+                    {"detail": "이미 팔로우한 사용자입니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # 팔로우 관계 생성
+            Follow.objects.create(follower=request.user, following=following_user)
+
+            profile_serializer = ProfileSerializer(
+                following_user, context={"request": request}
+            )
+            return Response(profile_serializer.data, status=status.HTTP_201_CREATED)
+
+        except ValidationError as e:
+            return Response(
+                {"detail": "유저가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "팔로우 처리 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
+@extend_schema(
+    summary="언팔로우",
+    description="특정 사용자를 언팔로우합니다.",
+    parameters=[
+        OpenApiParameter(
+            name="pk", description="언팔로우할 사용자의 ID", required=True, type=int
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: OpenApiResponse(
+            response=ProfileSerializer,
+            description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
+        ),
+        status.HTTP_404_NOT_FOUND: OpenApiResponse(description="사용자를 찾을 수 없음"),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+            description="이미 팔로우하지 않은 사용자"
+        ),
+    },
+    tags=["profile"],
+)
 class UnfollowView(generics.DestroyAPIView):
     """
     언팔로우 API View
@@ -222,10 +429,49 @@ class UnfollowView(generics.DestroyAPIView):
 class ProfileSearchView(generics.ListAPIView):
     """
     프로필 검색 API View
+    사용자 이름, 닉네임 또는 이메일을 기반으로 프로필을 검색
+    검색 결과는 인증된 사용자에게만 제공
     """
 
     serializer_class = ProfileSearchSerializer
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="프로필 검색",
+        description="사용자 이름, 닉네임 또는 이메일을 기반으로 프로필을 검색합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="q",
+                description="검색 쿼리 (사용자 이름, 닉네임 또는 이메일)",
+                required=False,
+                type=str,
+            ),
+        ],
+        responses={200: ProfileSearchSerializer(many=True)},
+        examples=[
+            OpenApiExample(
+                "Example Response",
+                value=[
+                    {
+                        "id": 1,
+                        "username": "john_doe",
+                        "nickname": "John",
+                        "profile_image": "http://example.com/media/profile_images/john.jpg",
+                    },
+                    {
+                        "id": 2,
+                        "username": "jane_doe",
+                        "nickname": "Jane",
+                        "profile_image": "http://example.com/media/profile_images/jane.jpg",
+                    },
+                ],
+                response_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         query = self.request.query_params.get("q", "")
