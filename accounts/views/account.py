@@ -9,7 +9,6 @@ from drf_spectacular.utils import (
     OpenApiResponse,
 )
 from drf_spectacular.types import OpenApiTypes
-from django.views.generic import TemplateView
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
 from django.contrib.auth.tokens import (
@@ -253,6 +252,7 @@ class UserDeactivateView(APIView):
     @extend_schema(
         summary="사용자 계정 비활성화",
         description="현재 로그인된 사용자의 계정을 비활성화하고 로그아웃합니다. 비활성화된 계정은 나중에 다시 활성화할 수 있습니다.",
+        request=None,
         responses={
             200: OpenApiResponse(
                 description="계정 비활성화 성공",
@@ -368,6 +368,43 @@ class ActivateAccountView(APIView):
     토큰 유효성 검사 이후 활성화 True로 바꿈
     """
 
+    @extend_schema(
+        summary="계정 활성화",
+        description="이메일로 전송된 링크를 통해 비활성화된 계정을 활성화합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="uidb64",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                description="Base64로 인코딩된 사용자 ID",
+            ),
+            OpenApiParameter(
+                name="token",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                description="계정 활성화를 위한 토큰",
+            ),
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "성공 응답",
+                value={"detail": "계정이 성공적으로 재활성화되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "활성화 실패 응답",
+                value={"detail": "유효하지 않은 활성화 링크입니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def get(self, request, uidb64, token):
 
         try:
@@ -417,6 +454,46 @@ class UserDeleteView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="계정 삭제",
+        description="사용자 계정을 완전히 삭제합니다. 삭제를 확인하기 위해 'DELETE'라는 확인 코드가 필요합니다.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "confirmation": {
+                        "type": "string",
+                        "description": "계정 삭제 확인 코드. 'DELETE'여야 합니다.",
+                    }
+                },
+                "required": ["confirmation"],
+            }
+        },
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "유효한 입력",
+                value={"confirmation": "DELETE"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "성공 응답",
+                value={"detail": "귀하의 계정이 완전히 삭제되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "잘못된 확인 코드",
+                value={"detail": "올바른 확인 코드를 입력해주세요."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def post(self, request):
         """
         confirmation code를 받아서 DELETE request
@@ -435,7 +512,3 @@ class UserDeleteView(APIView):
             {"detail": "귀하의 계정이 완전히 삭제되었습니다."},
             status=status.HTTP_200_OK,
         )
-
-
-class GoogleLoginTestView(TemplateView):
-    template_name = "accounts/google_login_test.html"
