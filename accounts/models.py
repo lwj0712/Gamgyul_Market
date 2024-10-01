@@ -28,7 +28,7 @@ class User(AbstractUser):
     temperature = models.FloatField(
         default=36.5, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
-    nickname = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    nickname = models.CharField(max_length=50, unique=True)
     bio = models.TextField(max_length=500, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
