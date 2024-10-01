@@ -208,3 +208,13 @@ class ReviewDeleteView(generics.DestroyAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated, IsReviewOwner]
     lookup_field = "id"
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            review = self.get_object()
+            self.perform_destroy(review)
+            return JsonResponse(
+                {"status": "success", "message": "Review deleted successfully"}
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
