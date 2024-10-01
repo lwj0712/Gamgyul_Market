@@ -52,9 +52,26 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     lookup_field = "id"
 
     def get_object(self):
-        return get_object_or_404(
+        # 채팅방을 가져오고, 참가자 여부 확인
+        chat_room = get_object_or_404(
             ChatRoom, id=self.kwargs["room_id"], participants=self.request.user
         )
+
+        # 채팅방에 입장할 때 메시지 읽음 처리
+        self.mark_all_messages_as_read(chat_room)
+
+        return chat_room
+
+    def mark_all_messages_as_read(self, chat_room):
+        """
+        채팅방에 입장할 때 해당 채팅방의 모든 안 읽은 메시지를 읽음 처리합니다.
+        """
+        messages = Message.objects.filter(chat_room=chat_room, is_read=False).exclude(
+            sender=self.request.user
+        )
+        for message in messages:
+            message.is_read = True
+            message.save()
 
 
 class ChatRoomLeaveView(generics.DestroyAPIView):
