@@ -1,13 +1,9 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from drf_spectacular.utils import (
-    extend_schema_serializer,
-    OpenApiParameter,
-    OpenApiExample,
-)
-from drf_spectacular.types import OpenApiTypes
 from allauth.socialaccount.models import SocialAccount
 from insta.models import Comment, Post
 from market.models import Product
@@ -77,7 +73,7 @@ class SocialLoginSerializer(serializers.Serializer):
     access_token = serializers.CharField(max_length=4096, trim_whitespace=True)
 
 
-class LoginSerializer(serializers.Serializer):
+class CustomLoginSerializer(serializers.Serializer):
     """
     로그인 serializer
     """
@@ -86,7 +82,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
 
-class PasswordChangeSerializer(serializers.Serializer):
+class CustomPasswordChangeSerializer(serializers.Serializer):
     """
     비밀번호 변경 serializer
     이전 비밀번호가 올바른 지 유효성 검사
@@ -176,18 +172,23 @@ class ProfileSerializer(serializers.ModelSerializer):
             "products",
         )
 
+    @extend_schema_field(FollowSerializer(many=True))
     def get_followers(self, obj):
         return FollowSerializer(obj.followers.all(), many=True).data
 
+    @extend_schema_field(FollowSerializer(many=True))
     def get_following(self, obj):
         return FollowSerializer(obj.following.all(), many=True).data
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_followers_count(self, obj):
         return obj.followers.count()
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_following_count(self, obj):
         return obj.following.count()
 
+    @extend_schema_field(CommentedPostSerializer(many=True))
     def get_commented_posts(self, obj):
         comments = (
             Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
@@ -195,6 +196,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         posts = Post.objects.filter(id__in=comments)
         return CommentedPostSerializer(posts, many=True).data
 
+    @extend_schema_field(ProductSerializer(many=True))
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True).data
@@ -251,6 +253,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     프로필 업데이트 serializer
     """
 
+    profile_image_thumbnail = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -264,6 +268,13 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             "email": {"required": False},
             "profile_image": {"required": False},
         }
+
+    @extend_schema_field(OpenApiTypes.URI)
+    def get_profile_image_thumbnail(self, obj):
+        # 필드명 url로 인식
+        if obj.profile_image:
+            return obj.profile_image_thumbnail.url
+        return None
 
     def validate_email(self, value):
         # 현재 사용자를 제외한 유저들의 email 체크

@@ -26,8 +26,8 @@ from django.core.mail import send_mail  # 이메일 전송 기능
 from django.urls import reverse
 from accounts.serializers import (
     UserSerializer,
-    LoginSerializer,
-    PasswordChangeSerializer,
+    CustomLoginSerializer,
+    CustomPasswordChangeSerializer,
 )
 from accounts.auth_backends import CustomAuthBackend
 
@@ -77,12 +77,12 @@ class LoginView(APIView):
     """
 
     permission_classes = [AllowAny]
-    serializer_class = LoginSerializer
+    serializer_class = CustomLoginSerializer
 
     @extend_schema(
         summary="사용자 로그인",
         description="사용자 이름과 비밀번호를 사용하여 로그인합니다. 비활성화된 계정의 경우 재활성화 옵션을 제공합니다.",
-        request=LoginSerializer,
+        request=CustomLoginSerializer,
         responses={
             200: OpenApiResponse(
                 description="로그인 성공",
@@ -178,13 +178,13 @@ class PasswordChangeView(APIView):
     저장 후 로그아웃 기능
     """
 
-    serializer_class = PasswordChangeSerializer
+    serializer_class = CustomPasswordChangeSerializer
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="비밀번호 변경",
         description="현재 인증된 사용자의 비밀번호를 변경합니다. 변경 후 자동으로 로그아웃됩니다.",
-        request=PasswordChangeSerializer,
+        request=CustomPasswordChangeSerializer,
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description="비밀번호 변경 성공",
@@ -288,7 +288,7 @@ class RequestReactivationView(APIView):
 
     @extend_schema(
         summary="계정 재활성화 요청",
-        description="비활성화된 계정에 대해 재활성화 링크를 이메일로 전송합니다.",
+        description="비활성화된 계정(일반 및 소셜 로그인)에 대해 재활성화 링크를 이메일로 전송합니다.",
         request={
             "application/json": {
                 "type": "object",
@@ -309,7 +309,7 @@ class RequestReactivationView(APIView):
                 request_only=True,
             ),
             OpenApiExample(
-                "Success Response",
+                "성공 응답",
                 summary="성공 응답 예시",
                 description="재활성화 링크 전송 성공",
                 value={"detail": "재활성화 링크가 이메일로 전송되었습니다."},
@@ -317,7 +317,7 @@ class RequestReactivationView(APIView):
                 status_codes=["200"],
             ),
             OpenApiExample(
-                "Error Response",
+                "계정 없음",
                 summary="에러 응답 예시",
                 description="계정을 찾을 수 없는 경우",
                 value={"detail": "해당 이메일의 비활성화된 계정을 찾을 수 없습니다."},

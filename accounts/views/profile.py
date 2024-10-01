@@ -1,4 +1,4 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
@@ -28,6 +28,46 @@ class ProfileDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     lookup_field = "username"
 
+    @extend_schema(
+        summary="사용자 프로필 조회",
+        description="지정된 사용자명의 프로필 정보를 조회합니다. 조회자의 권한에 따라 정보 표시가 다를 수 있습니다.",
+        parameters=[
+            OpenApiParameter(
+                name="username",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                description="조회할 사용자의 username",
+            ),
+        ],
+        responses={
+            200: ProfileSerializer,
+            401: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "프로필 조회 성공 예시",
+                summary="성공적인 프로필 조회",
+                description="사용자 프로필 정보가 성공적으로 조회된 경우",
+                value={
+                    "id": 1,
+                    "username": "example_user",
+                    "nickname": "Example User",
+                    "bio": "This is a bio",
+                    "profile_image": "http://example.com/profile.jpg",
+                    "temperature": 36.5,
+                    "followers_count": 10,
+                    "following_count": 20,
+                    # 기타 필드는 조회자의 권한에 따라 다를 수 있음
+                },
+                response_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
@@ -42,6 +82,40 @@ class ProfileUpdateView(generics.UpdateAPIView):
     serializer_class = ProfileUpdateSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="사용자 프로필 업데이트",
+        description="현재 로그인한 사용자의 프로필 정보를 업데이트합니다.",
+        request=ProfileUpdateSerializer,
+        responses={200: ProfileUpdateSerializer},
+        methods=["PUT", "PATCH"],
+        examples=[
+            OpenApiExample(
+                "프로필 업데이트 예시",
+                summary="프로필 정보 업데이트",
+                description="사용자 프로필 정보 업데이트 요청 예시",
+                value={
+                    "nickname": "새로운 닉네임",
+                    "bio": "새로운 자기소개",
+                    "email": "new.email@example.com",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "프로필 업데이트 응답 예시",
+                summary="프로필 정보 업데이트 응답",
+                description="성공적으로 업데이트된 프로필 정보 응답 예시",
+                value={
+                    "nickname": "새로운 닉네임",
+                    "bio": "새로운 자기소개",
+                    "email": "new.email@example.com",
+                    "profile_image": "http://example.com/new_profile.jpg",
+                    "profile_image_thumbnail": "http://example.com/new_profile_thumb.jpg",
+                },
+                response_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
     def get_object(self):
         return self.request.user
 
@@ -60,6 +134,24 @@ class ProfileUpdateView(generics.UpdateAPIView):
 
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="사용자 프로필 부분 업데이트",
+        description="현재 로그인한 사용자의 프로필 정보를 부분적으로 업데이트합니다.",
+        request=ProfileUpdateSerializer,
+        responses={200: ProfileUpdateSerializer},
+        examples=[
+            OpenApiExample(
+                "프로필 부분 업데이트 예시",
+                summary="프로필 정보 부분 업데이트",
+                description="사용자 프로필 정보 부분 업데이트 요청 예시",
+                value={
+                    "nickname": "새로운 닉네임",
+                },
+                request_only=True,
+            ),
+        ],
+        tags=["profile"],
+    )
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
@@ -117,17 +209,28 @@ class UnfollowView(generics.DestroyAPIView):
 
     queryset = Follow.objects.all()
     permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
 
     def destroy(self, request, *args, **kwargs):
         following_id = self.kwargs["pk"]
-        following_user = User.objects.get(id=following_id)
-        Follow.objects.filter(
-            follower=self.request.user, following=following_user
-        ).delete()
-        profile_serializer = ProfileSerializer(
-            following_user, context={"request": request}
-        )
-        return Response(profile_serializer.data)
+        try:
+            following_user = User.objects.get(id=following_id)
+            Follow.objects.filter(
+                follower=self.request.user, following=following_user
+            ).delete()
+            profile_serializer = self.get_serializer(
+                following_user, context={"request": request}
+            )
+            return Response(profile_serializer.data)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Follow.DoesNotExist:
+            return Response(
+                {"detail": "You are not following this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ProfileSearchView(generics.ListAPIView):
