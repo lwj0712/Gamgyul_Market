@@ -2,9 +2,6 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,
@@ -33,6 +30,7 @@ from accounts.serializers import (
     LoginSerializer,
     PasswordChangeSerializer,
 )
+from accounts.auth_backends import CustomAuthBackend
 
 User = get_user_model()
 
@@ -288,6 +286,47 @@ class RequestReactivationView(APIView):
     재활성화 요청 처리 API View
     """
 
+    @extend_schema(
+        summary="계정 재활성화 요청",
+        description="비활성화된 계정에 대해 재활성화 링크를 이메일로 전송합니다.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {"email": {"type": "string", "format": "email"}},
+                "required": ["email"],
+            }
+        },
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "Valid Request",
+                summary="유효한 요청 예시",
+                description="비활성화된 계정의 이메일 주소",
+                value={"email": "user@example.com"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Success Response",
+                summary="성공 응답 예시",
+                description="재활성화 링크 전송 성공",
+                value={"detail": "재활성화 링크가 이메일로 전송되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "Error Response",
+                summary="에러 응답 예시",
+                description="계정을 찾을 수 없는 경우",
+                value={"detail": "해당 이메일의 비활성화된 계정을 찾을 수 없습니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def post(self, request):
         email = request.data.get("email")  # email get으로 받아오기
         try:
@@ -304,7 +343,7 @@ class RequestReactivationView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))  # 인코딩
         activation_link = request.build_absolute_uri(
             reverse(
-                "activate_account", kwargs={"uidb64": uid, "token": token}
+                "accounts:activate_account", kwargs={"uidb64": uid, "token": token}
             )  # activate account에 해당하는 url 패턴에 uid, token 전달
         )
         # 이메일 보냄
@@ -340,11 +379,30 @@ class ActivateAccountView(APIView):
         if user is not None and default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            login(request, user)  # 바로 로그인
-            return Response(
-                {"detail": "계정이 성공적으로 재활성화되었습니다."},
-                status=status.HTTP_200_OK,
+
+            # CustomAuth로 백엔드 지정, 백엔드 중복 문제 해결
+            backend = CustomAuthBackend()
+
+            # 비밀번호 검증 건너뜀
+            authenticated_user = backend.authenticate(
+                request, username=user.username, password=None, activate=True
             )
+
+            if authenticated_user:
+                login(
+                    request,
+                    authenticated_user,
+                    backend="accounts.auth_backends.CustomAuthBackend",
+                )
+                return Response(
+                    {"detail": "계정이 성공적으로 재활성화되었습니다."},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"detail": "계정은 활성화되었지만 로그인에 실패했습니다."},
+                    status=status.HTTP_200_OK,
+                )
         else:
             return Response(
                 {"detail": "유효하지 않은 활성화 링크입니다."},

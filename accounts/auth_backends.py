@@ -10,6 +10,10 @@ class CustomAuthBackend(ModelBackend):
         except UserModel.DoesNotExist:
             return None
 
+        # 활성화 프로세스를 위한 특별한 경우 추가
+        if password is None and kwargs.get("activate", False):
+            return user
+
         if user.check_password(password):
             return user
         return None
