@@ -242,56 +242,6 @@ class PasswordChangeView(APIView):
         )
 
 
-class GoogleLoginView(SocialLoginView):
-    """
-    google 로그인 담당 처리 View
-    settings에 callbacks url 설정
-    """
-
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = settings.GOOGLE_CALLBACK_URI
-    client_class = OAuth2Client
-
-
-class GoogleLoginURLView(APIView):
-    """
-    Google 로그인 URL API View
-    """
-
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        adapter = GoogleOAuth2Adapter(request)
-        provider = adapter.get_provider()
-        app = provider.get_app(request)
-        client = OAuth2Client(
-            request,
-            app.client_id,
-            app.secret,
-            adapter.access_token_method,
-            adapter.access_token_url,
-            callback_url=settings.GOOGLE_CALLBACK_URI,
-        )
-        authorize_url = client.get_redirect_url()
-        return Response({"authorization_url": authorize_url}, status=status.HTTP_200_OK)
-
-
-class GoogleCallbackView(APIView):
-    """
-    Google callback API View
-    """
-
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        code = request.GET.get("code", None)
-        if code:
-            return Response({"code": code}, status=status.HTTP_200_OK)
-        return Response(
-            {"error": "코드를 찾을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-
 class UserDeactivateView(APIView):
     """
     계정 비활성화 API View
