@@ -1,17 +1,25 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import ChatRoom, Message
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    사용자 정보를 직렬화하는 클래스
+    """
+
     class Meta:
         model = User
         fields = ["id", "username", "email"]
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
+    """
+    채팅방을 직렬화하는 클래스. 참여자와 채팅방 이름을 관리
+    """
+
     participants = serializers.SlugRelatedField(
         many=True,
         slug_field="username",
@@ -25,6 +33,9 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         fields = ["id", "participants", "name", "created_at"]
 
     def create(self, validated_data):
+        """
+        새로운 채팅방을 생성하는 로직. 참여자가 2명이어야 하며, 중복된 채팅방을 허용하지 않음
+        """
         participants = validated_data.pop("participants")
 
         if len(participants) != 2:
@@ -53,6 +64,10 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    """
+    메시지를 직렬화하는 클래스. 텍스트 또는 이미지로 메시지를 전송 가능
+    """
+
     sender = UserSerializer(read_only=True)
     image = serializers.ImageField(
         max_length=None, allow_empty_file=True, use_url=True, required=False
@@ -68,10 +83,12 @@ class MessageSerializer(serializers.ModelSerializer):
             "sent_at",
             "is_read",
         ]
-
-    read_only_fields = ["id", "sender", "sent_at", "is_read"]
+        read_only_fields = ["id", "sender", "sent_at", "is_read"]
 
     def validate(self, data):
+        """
+        메시지 유효성 검사: 메시지는 텍스트 또는 이미지를 포함해야 함
+        """
         content = data.get("content")
         image = data.get("image")
         if not content and not image:
@@ -81,6 +98,9 @@ class MessageSerializer(serializers.ModelSerializer):
         return data
 
     def validate_image(self, value):
+        """
+        이미지 크기 제한: 5MB를 초과하지 않도록 유효성 검사
+        """
         if value.size > 5 * 1024 * 1024:
             raise serializers.ValidationError(
                 "이미지의 크기는 5MB를 넘지 않아야 합니다."
