@@ -7,6 +7,11 @@
 </head>
 <body>
     <h1>{{ product.name }}</h1>
+
+    {% for image_url in product.images %}
+        <img src="{{ image_url }}" alt="{{ product.name }}" style="max-width: 100%; height: auto;">
+    {% endfor %}
+    <p>작성자 : {{ product.username }}</p>
     <p>가격: {{ product.price }}원</p>
     <p>별점: {{ product.average_rating }}</p>
     <p>제품 설명: {{ product.description }}</p>
@@ -14,6 +19,12 @@
     <p>품종: {{ product.variety }}</p>
     <p>재배 지역: {{ product.growing_region }}</p>
     <p>재배 일자: {{ product.harvest_date }}</p>
+
+
+    
+        <button onclick="window.location.href='{% url 'product-update' product.id %}';">수정</button>
+        <button onclick="window.location.href='{% url 'product-delete' product.id %}';">삭제</button>
+    
 
     <h3>리뷰 작성</h3>
     <form id="review-form" method="post" action="{% url 'product-detail' product.id %}">
@@ -33,11 +44,15 @@
     <h2>리뷰</h2>
     <ul>
         {% for review in reviews %}
-            <li>
+            <li id="review-{{ review.id }}">
                 <p>작성자: {{ review.user }}</p>
                 <p>별점: {{ review.rating }}</p>
                 <p>{{ review.content }}</p>
                 <p>작성일: {{ review.created_at }}</p>
+
+                {% if user.is_authenticated and user.username == review.user %}
+                    <button class="delete-review-btn" data-review-id="{{ review.id }}">삭제</button>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
@@ -98,10 +113,44 @@
             } else {
                 console.error('Review form not found');
             }
+
+            // 리뷰 삭제 버튼 처리
+            const deleteButtons = document.querySelectorAll('.delete-review-btn');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const reviewId = this.getAttribute('data-review-id');
+                    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                    fetch(`/market/products/{{ product.id }}/reviews/${reviewId}/delete/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // 리뷰가 삭제되었으면 DOM에서 해당 리뷰 요소 삭제
+                            const reviewElement = document.getElementById(`review-${reviewId}`);
+                            reviewElement.remove();
+                        } else {
+                            alert('리뷰 삭제에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('리뷰 삭제 중 오류가 발생했습니다.');
+                    });
+                });
+            });
         });
-        </script>
-    
-    
+    </script>
 
 </body>
 </html>
