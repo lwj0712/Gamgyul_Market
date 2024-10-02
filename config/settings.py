@@ -18,20 +18,9 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
+    # 3rd party apps
     "daphne",
     "channels",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.sites",
-    "accounts",
-    "insta",
-    "market",
-    "chat",
-    "alarm",
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
@@ -47,6 +36,20 @@ INSTALLED_APPS = [
     "imagekit",
     "crispy_forms",
     "taggit",
+    # my apps
+    "accounts",
+    "insta",
+    "market",
+    "chat",
+    "alarm",
+    # Django apps
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
 ]
 
 MIDDLEWARE = [
