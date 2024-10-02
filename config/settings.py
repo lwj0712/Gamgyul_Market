@@ -198,11 +198,12 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Django AllAuth 설정
 AUTHENTICATION_BACKENDS = [
+    "accounts.auth_backends.CustomAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-SITE_ID = 1
+SITE_ID = 2
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = "my-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "my-refresh-token"
@@ -224,9 +225,11 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.CustomSocialAccountAdapter"
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_CALLBACK_URI = "http://localhost:8000/accounts/google/login/callback"
+GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/login/callback/"
 
 # SMTP(Simple Mail Transfer ProtocoL) 설정
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

@@ -7,6 +7,10 @@ from imagekit.processors import ResizeToFill, Thumbnail
 
 
 class User(AbstractUser):
+    """
+    커스텀 유저 모델
+    """
+
     profile_image = ProcessedImageField(
         upload_to="profile_images",
         processors=[ResizeToFill(400, 400)],
@@ -34,6 +38,10 @@ class User(AbstractUser):
 
 
 class SocialAccount(models.Model):
+    """
+    소셜 계정 유저 모델
+    """
+
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="social_accounts"
     )
@@ -49,6 +57,10 @@ class SocialAccount(models.Model):
 
 
 class Follow(models.Model):
+    """
+    팔로우 관계 모델
+    """
+
     follower = models.ForeignKey(
         User, related_name="following", on_delete=models.CASCADE
     )
@@ -65,6 +77,10 @@ class Follow(models.Model):
 
 
 class PrivacySettings(models.Model):
+    """
+    프로필 공개 설정 모델
+    """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
