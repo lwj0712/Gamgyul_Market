@@ -200,6 +200,10 @@ class PasswordChangeView(APIView):
                     "properties": {
                         "old_password": {"type": "array", "items": {"type": "string"}},
                         "new_password": {"type": "array", "items": {"type": "string"}},
+                        "non_field_errors": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },  # 이전과 새 비밀번호가 동일할 때 특정 필드에 속하지 X
                     },
                 },
             ),
@@ -221,6 +225,18 @@ class PasswordChangeView(APIView):
                 value={
                     "detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."
                 },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "Error: Same Password",
+                value={
+                    "non_field_errors": ["새 비밀번호는 이전 비밀번호와 달라야 합니다."]
+                },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "Error: Incorrect Old Password",
+                value={"old_password": ["이전 비밀번호가 올바르지 않습니다."]},
                 response_only=True,
             ),
         ],
