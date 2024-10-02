@@ -1,22 +1,27 @@
+import uuid
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
 from django.db import models
 from django.conf import settings
 from django.db.models import Avg
+from django.utils.text import slugify
 
 
-# Product Model
 class Product(models.Model):
+    """
+    상품 모델
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
-    )  # user_id
+    )
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     stock = models.IntegerField()
-    variety = models.CharField(max_length=255, blank=True, null=True)  # 감귤 품종
-    growing_region = models.CharField(
-        max_length=255, blank=True, null=True
-    )  # 재배 지역
-    harvest_date = models.DateField(blank=True, null=True)  # 수확 날짜
+    variety = models.CharField(max_length=255, blank=True, null=True)
+    growing_region = models.CharField(max_length=255, blank=True, null=True)
+    harvest_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,39 +29,61 @@ class Product(models.Model):
         return self.name
 
     def average_rating(self):
-        return self.reviews.aggregate(Avg("rating"))["rating_avg"]
+        return self.reviews.aggregate(Avg("rating"))["rating__avg"]
 
 
-# ProductImage Model
+def upload_to(instance, filename):
+    """
+    이미지를 UUID로 데이터베이스에 저장하는 함수
+    """
+    ext = filename.split(".")[-1]
+    return f"products/{uuid.uuid4()}.{ext}"
+
+
 class ProductImage(models.Model):
+    """
+    상품에 들어갈 이미지 모델
+    """
+
     product = models.ForeignKey(
-        Product, related_name="images", on_delete=models.CASCADE
-    )  # product_id
-    image_urls = models.ImageField(upload_to="media/products/")  # 이미지 URL
+        "Product", related_name="images", on_delete=models.CASCADE
+    )
+    image = ProcessedImageField(
+        upload_to=upload_to,
+        processors=[ResizeToFit(1920, 1080)],
+        format="JPEG",
+        options={"quality": 100},
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Image for {self.product.name}"
 
 
-# Review Model
 class Review(models.Model):
+    """
+    상품 리뷰 모델
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
-    )  # user_id
+    )
     product = models.ForeignKey(
         Product, related_name="reviews", on_delete=models.CASCADE
-    )  # product_id
-    content = models.TextField()  # 리뷰 내용
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])  # 별점 1~5점
+    )
+    content = models.TextField()
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Review for {self.product.name}"
 
 
-# 영수증? 장부?
 class Receipt(models.Model):
+    """
+    거래 내역을 저장하는 영수증 모델
+    """
+
     product = models.TextField()
     quantity = models.IntegerField()
     seller = models.TextField()
