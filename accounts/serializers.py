@@ -59,6 +59,11 @@ class UserSerializer(serializers.ModelSerializer):
             "temperature": {"read_only": True},
         }
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("이미 사용 중인 이메일입니다.")
+        return value
+
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user

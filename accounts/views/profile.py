@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,7 @@ from drf_spectacular.utils import (
 from drf_spectacular.types import OpenApiTypes
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ValidationError
+
 from django.contrib.auth import get_user_model
 from accounts.serializers import (
     FollowSerializer,
@@ -314,9 +315,9 @@ class FollowView(generics.CreateAPIView):
             ),
             OpenApiExample(
                 "Error: User Not Found",
-                value={"detail": "유저가 존재하지 않습니다."},
+                value={"detail": "팔로우하려는 사용자를 찾을 수 없습니다."},
                 response_only=True,
-                status_codes=["404"],
+                status_codes=["400"],
             ),
             OpenApiExample(
                 "Error: Server Error",
@@ -335,7 +336,7 @@ class FollowView(generics.CreateAPIView):
             following_id = self.kwargs["pk"]
 
             # 팔로우할 사용자가 존재하는지 확인
-            following_user = get_object_or_404(User, id=following_id)
+            following_user = User.objects.get(id=following_id)
 
             # 자기 자신을 팔로우하려는 경우 예외 처리
             if request.user.id == following_user.id:
@@ -344,16 +345,7 @@ class FollowView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 이미 팔로우한 경우 예외 처리
-            if Follow.objects.filter(
-                follower=request.user, following=following_user
-            ).exists():
-                return Response(
-                    {"detail": "이미 팔로우한 사용자입니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # 팔로우 관계 생성
+            # 팔로우 관계 생성 시도
             Follow.objects.create(follower=request.user, following=following_user)
 
             profile_serializer = ProfileSerializer(
@@ -361,14 +353,20 @@ class FollowView(generics.CreateAPIView):
             )
             return Response(profile_serializer.data, status=status.HTTP_201_CREATED)
 
-        except ValidationError as e:
+        except User.DoesNotExist:
             return Response(
-                {"detail": "유저가 존재하지 않습니다."},
+                {"detail": "팔로우하려는 사용자를 찾을 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except IntegrityError:
+            # 이미 팔로우한 경우
+            return Response(
+                {"detail": "이미 팔로우한 사용자입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as e:
             return Response(
-                {"detail": "팔로우 처리 중 오류가 발생했습니다."},
+                {"detail": f"팔로우 처리 중 오류가 발생했습니다: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -386,7 +384,9 @@ class FollowView(generics.CreateAPIView):
             response=ProfileSerializer,
             description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
         ),
-        status.HTTP_404_NOT_FOUND: OpenApiResponse(description="사용자를 찾을 수 없음"),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+            description="팔로우한 사용자를 찾을 수 없음"
+        ),
         status.HTTP_400_BAD_REQUEST: OpenApiResponse(
             description="이미 팔로우하지 않은 사용자"
         ),
@@ -407,17 +407,18 @@ class UnfollowView(generics.DestroyAPIView):
         following_id = self.kwargs["pk"]
         try:
             following_user = User.objects.get(id=following_id)
-            Follow.objects.filter(
+            follow = Follow.objects.get(
                 follower=self.request.user, following=following_user
-            ).delete()
+            )
+            follow.delete()
             profile_serializer = self.get_serializer(
                 following_user, context={"request": request}
             )
             return Response(profile_serializer.data)
         except User.DoesNotExist:
             return Response(
-                {"detail": "유저가 존재하지 않습니다."},
-                status=status.HTTP_404_NOT_FOUND,
+                {"detail": "언팔로우할 유저가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         except Follow.DoesNotExist:
             return Response(

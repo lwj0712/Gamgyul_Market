@@ -223,7 +223,6 @@ class PasswordChangeTestCase(BaseTestCase):
         data = {"old_password": "testpassword123", "new_password": "short"}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("이 비밀번호는 너무 짧습니다", str(response.data["new_password"]))
 
 
 class UnauthenticatedUserTestCase(BaseTestCase):

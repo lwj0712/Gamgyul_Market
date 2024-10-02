@@ -107,6 +107,9 @@ class FollowViewTestCase(BaseProfileTestCase):
         url = reverse("accounts:follow", kwargs={"pk": self.user2.id})
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            Follow.objects.filter(follower=self.user1, following=self.user2).exists()
+        )
 
     def test_follow_self(self):
         # 자기 자신을 팔로우하려는 경우 에러
@@ -119,7 +122,10 @@ class FollowViewTestCase(BaseProfileTestCase):
         # 존재하지 않는 사용자를 팔로우하려는 경우 에러
         url = reverse("accounts:follow", kwargs={"pk": 9999})
         response = self.client.post(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "팔로우하려는 사용자를 찾을 수 없습니다."
+        )
 
     def test_follow_already_following(self):
         # 이미 팔로우한 사용자를 팔로우하려는 경우 에러
@@ -160,7 +166,10 @@ class UnfollowViewTestCase(BaseProfileTestCase):
         # 존재하지 않는 사용자를 언팔로우하려는 경우 에러
         url = reverse("accounts:unfollow", kwargs={"pk": 9999})
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "언팔로우할 유저가 존재하지 않습니다."
+        )
 
 
 class ProfileSearchViewTestCase(BaseProfileTestCase):
