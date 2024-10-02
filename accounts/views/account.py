@@ -2,9 +2,13 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiExample,
+    OpenApiResponse,
+)
+from drf_spectacular.types import OpenApiTypes
 from django.conf import settings
 from django.contrib.auth import login, get_user_model, logout, authenticate
 from django.contrib.auth.tokens import (
@@ -22,9 +26,10 @@ from django.core.mail import send_mail  # 이메일 전송 기능
 from django.urls import reverse
 from accounts.serializers import (
     UserSerializer,
-    LoginSerializer,
-    PasswordChangeSerializer,
+    CustomLoginSerializer,
+    CustomPasswordChangeSerializer,
 )
+from accounts.auth_backends import CustomAuthBackend
 
 User = get_user_model()
 
@@ -39,6 +44,31 @@ class SignUpView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        summary="사용자 회원가입",
+        description="새로운 사용자 계정을 생성합니다.",
+        request=UserSerializer,
+        responses={201: UserSerializer},
+        examples=[
+            OpenApiExample(
+                "회원가입 예시",
+                summary="기본 회원가입",
+                description="사용자 이름, 이메일, 비밀번호, 닉네임을 사용한 기본 회원가입 예시",
+                value={
+                    "username": "newuser",
+                    "email": "newuser@example.com",
+                    "password": "securepassword123",
+                    "nickname": "New User",
+                    "bio": "안녕하세요, 새로운 사용자입니다.",
+                },
+                request_only=True,
+            ),
+        ],
+        tags=["account"],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 
 class LoginView(APIView):
     """
@@ -47,15 +77,48 @@ class LoginView(APIView):
     """
 
     permission_classes = [AllowAny]
-    serializer_class = LoginSerializer
+    serializer_class = CustomLoginSerializer
 
+    @extend_schema(
+        summary="사용자 로그인",
+        description="사용자 이름과 비밀번호를 사용하여 로그인합니다. 비활성화된 계정의 경우 재활성화 옵션을 제공합니다.",
+        request=CustomLoginSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="로그인 성공",
+                response={
+                    "type": "object",
+                    "properties": {"detail": {"type": "string"}},
+                },
+            ),
+            400: OpenApiResponse(
+                description="잘못된 로그인 정보",
+                response={
+                    "type": "object",
+                    "properties": {"detail": {"type": "string"}},
+                },
+            ),
+            403: OpenApiResponse(
+                description="비활성화된 계정",
+                response={
+                    "type": "object",
+                    "properties": {
+                        "detail": {"type": "string"},
+                        "inactive_account": {"type": "boolean"},
+                        "email": {"type": "string"},
+                    },
+                },
+            ),
+        },
+        tags=["account"],
+    )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data["username"]
             password = serializer.validated_data["password"]
             user = authenticate(username=username, password=password)
-            if user:
+            if user is not None:
                 if user.is_active:
                     login(request, user)
                     return Response(
@@ -85,23 +148,88 @@ class LogoutView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="로그아웃",
+        description="현재 인증된 사용자의 로그아웃을 처리합니다.",
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description="로그아웃 성공",
+                response={
+                    "type": "object",
+                    "properties": {"detail": {"type": "string"}},
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description="인증되지 않은 사용자",
+            ),
+        },
+        tags=["account"],
+    )
     def post(self, request):
         logout(request)
         return Response({"detail": "로그아웃 성공"}, status=status.HTTP_200_OK)
 
 
-class PasswordChangeView(generics.UpdateAPIView):
+class PasswordChangeView(APIView):
     """
-    비밀번호 변경 api view
+    비밀번호 변경 API View
     serializer 유효성 검사 후 저장
     저장 후 로그아웃 기능
     """
 
-    serializer_class = PasswordChangeSerializer
+    serializer_class = CustomPasswordChangeSerializer
     permission_classes = [IsAuthenticated]
 
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    @extend_schema(
+        summary="비밀번호 변경",
+        description="현재 인증된 사용자의 비밀번호를 변경합니다. 변경 후 자동으로 로그아웃됩니다.",
+        request=CustomPasswordChangeSerializer,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description="비밀번호 변경 성공",
+                response={
+                    "type": "object",
+                    "properties": {"detail": {"type": "string"}},
+                },
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description="잘못된 요청 (유효하지 않은 데이터)",
+                response={
+                    "type": "object",
+                    "properties": {
+                        "old_password": {"type": "array", "items": {"type": "string"}},
+                        "new_password": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description="인증되지 않은 사용자",
+            ),
+        },
+        examples=[
+            OpenApiExample(
+                "Valid Input",
+                value={
+                    "old_password": "current_password123",
+                    "new_password": "securepassword456",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Success Response",
+                value={
+                    "detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."
+                },
+                response_only=True,
+            ),
+        ],
+        tags=["account"],
+    )
+    def put(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         logout(request)
@@ -111,59 +239,9 @@ class PasswordChangeView(generics.UpdateAPIView):
         )
 
 
-class GoogleLoginView(SocialLoginView):
-    """
-    google 로그인 담당 처리 view
-    settings에 callbacks url 설정
-    """
-
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = settings.GOOGLE_CALLBACK_URI
-    client_class = OAuth2Client
-
-
-class GoogleLoginURLView(APIView):
-    """
-    Google 로그인 URL API view
-    """
-
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        adapter = GoogleOAuth2Adapter(request)
-        provider = adapter.get_provider()
-        app = provider.get_app(request)
-        client = OAuth2Client(
-            request,
-            app.client_id,
-            app.secret,
-            adapter.access_token_method,
-            adapter.access_token_url,
-            callback_url=settings.GOOGLE_CALLBACK_URI,
-        )
-        authorize_url = client.get_redirect_url()
-        return Response({"authorization_url": authorize_url}, status=status.HTTP_200_OK)
-
-
-class GoogleCallbackView(APIView):
-    """
-    Google callback view
-    """
-
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        code = request.GET.get("code", None)
-        if code:
-            return Response({"code": code}, status=status.HTTP_200_OK)
-        return Response(
-            {"error": "코드를 찾을 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-
 class UserDeactivateView(APIView):
     """
-    계정 비활성화 API view
+    계정 비활성화 API View
     user.is_active = False로 계정 로그인 불가
     이후 계정을 다시 활성화 가능
     비활성화 유저 로그아웃 처리
@@ -171,6 +249,27 @@ class UserDeactivateView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="사용자 계정 비활성화",
+        description="현재 로그인된 사용자의 계정을 비활성화하고 로그아웃합니다. 비활성화된 계정은 나중에 다시 활성화할 수 있습니다.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="계정 비활성화 성공",
+                response={
+                    "type": "object",
+                    "properties": {
+                        "detail": {
+                            "type": "string",
+                            "example": "귀하의 계정이 비활성화되었으며 로그아웃되었습니다.",
+                        }
+                    },
+                },
+            ),
+            401: OpenApiResponse(description="인증되지 않은 사용자"),
+        },
+        tags=["account"],
+    )
     def post(self, request):
         user = request.user
         user.is_active = False
@@ -184,9 +283,50 @@ class UserDeactivateView(APIView):
 
 class RequestReactivationView(APIView):
     """
-    재활성화 요청 처리 api view
+    재활성화 요청 처리 API View
     """
 
+    @extend_schema(
+        summary="계정 재활성화 요청",
+        description="비활성화된 계정(일반 및 소셜 로그인)에 대해 재활성화 링크를 이메일로 전송합니다.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {"email": {"type": "string", "format": "email"}},
+                "required": ["email"],
+            }
+        },
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "Valid Request",
+                summary="유효한 요청 예시",
+                description="비활성화된 계정의 이메일 주소",
+                value={"email": "user@example.com"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "성공 응답",
+                summary="성공 응답 예시",
+                description="재활성화 링크 전송 성공",
+                value={"detail": "재활성화 링크가 이메일로 전송되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "계정 없음",
+                summary="에러 응답 예시",
+                description="계정을 찾을 수 없는 경우",
+                value={"detail": "해당 이메일의 비활성화된 계정을 찾을 수 없습니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def post(self, request):
         email = request.data.get("email")  # email get으로 받아오기
         try:
@@ -203,7 +343,7 @@ class RequestReactivationView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))  # 인코딩
         activation_link = request.build_absolute_uri(
             reverse(
-                "activate_account", kwargs={"uidb64": uid, "token": token}
+                "accounts:activate_account", kwargs={"uidb64": uid, "token": token}
             )  # activate account에 해당하는 url 패턴에 uid, token 전달
         )
         # 이메일 보냄
@@ -223,11 +363,48 @@ class RequestReactivationView(APIView):
 
 class ActivateAccountView(APIView):
     """
-    유저 활성화 api view
+    유저 활성화 API View
     전달받은 uid 디코딩
     토큰 유효성 검사 이후 활성화 True로 바꿈
     """
 
+    @extend_schema(
+        summary="계정 활성화",
+        description="이메일로 전송된 링크를 통해 비활성화된 계정을 활성화합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="uidb64",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                description="Base64로 인코딩된 사용자 ID",
+            ),
+            OpenApiParameter(
+                name="token",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.PATH,
+                description="계정 활성화를 위한 토큰",
+            ),
+        ],
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "성공 응답",
+                value={"detail": "계정이 성공적으로 재활성화되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "활성화 실패 응답",
+                value={"detail": "유효하지 않은 활성화 링크입니다."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def get(self, request, uidb64, token):
 
         try:
@@ -239,11 +416,30 @@ class ActivateAccountView(APIView):
         if user is not None and default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            login(request, user)  # 바로 로그인
-            return Response(
-                {"detail": "계정이 성공적으로 재활성화되었습니다."},
-                status=status.HTTP_200_OK,
+
+            # CustomAuth로 백엔드 지정, 백엔드 중복 문제 해결
+            backend = CustomAuthBackend()
+
+            # 비밀번호 검증 건너뜀
+            authenticated_user = backend.authenticate(
+                request, username=user.username, password=None, activate=True
             )
+
+            if authenticated_user:
+                login(
+                    request,
+                    authenticated_user,
+                    backend="accounts.auth_backends.CustomAuthBackend",
+                )
+                return Response(
+                    {"detail": "계정이 성공적으로 재활성화되었습니다."},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"detail": "계정은 활성화되었지만 로그인에 실패했습니다."},
+                    status=status.HTTP_200_OK,
+                )
         else:
             return Response(
                 {"detail": "유효하지 않은 활성화 링크입니다."},
@@ -253,11 +449,51 @@ class ActivateAccountView(APIView):
 
 class UserDeleteView(APIView):
     """
-    계정 삭제 API view
+    계정 삭제 API View
     """
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="계정 삭제",
+        description="사용자 계정을 완전히 삭제합니다. 삭제를 확인하기 위해 'DELETE'라는 확인 코드가 필요합니다.",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "confirmation": {
+                        "type": "string",
+                        "description": "계정 삭제 확인 코드. 'DELETE'여야 합니다.",
+                    }
+                },
+                "required": ["confirmation"],
+            }
+        },
+        responses={
+            200: OpenApiTypes.OBJECT,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            OpenApiExample(
+                "유효한 입력",
+                value={"confirmation": "DELETE"},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "성공 응답",
+                value={"detail": "귀하의 계정이 완전히 삭제되었습니다."},
+                response_only=True,
+                status_codes=["200"],
+            ),
+            OpenApiExample(
+                "잘못된 확인 코드",
+                value={"detail": "올바른 확인 코드를 입력해주세요."},
+                response_only=True,
+                status_codes=["400"],
+            ),
+        ],
+        tags=["account"],
+    )
     def post(self, request):
         """
         confirmation code를 받아서 DELETE request

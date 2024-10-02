@@ -18,20 +18,9 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
+    # 3rd party apps
     "daphne",
     "channels",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "django.contrib.sites",
-    "accounts",
-    "insta",
-    "market",
-    "chat",
-    "alarm",
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
@@ -47,6 +36,20 @@ INSTALLED_APPS = [
     "imagekit",
     "crispy_forms",
     "taggit",
+    # my apps
+    "accounts",
+    "insta",
+    "market",
+    "chat",
+    "alarm",
+    # Django apps
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
 ]
 
 MIDDLEWARE = [
@@ -195,11 +198,12 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Django AllAuth 설정
 AUTHENTICATION_BACKENDS = [
+    "accounts.auth_backends.CustomAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-SITE_ID = 1
+SITE_ID = 2
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = "my-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "my-refresh-token"
@@ -221,9 +225,11 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.CustomSocialAccountAdapter"
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_CALLBACK_URI = "http://localhost:8000/accounts/google/login/callback"
+GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/login/callback/"
 
 # SMTP(Simple Mail Transfer ProtocoL) 설정
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
