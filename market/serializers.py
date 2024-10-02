@@ -2,8 +2,11 @@ from rest_framework import serializers
 from .models import Product, ProductImage, Review
 
 
-# Review Serializer
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    리뷰 시리얼라이저
+    """
+
     user = serializers.ReadOnlyField(source="user.username")
 
     class Meta:
@@ -12,6 +15,10 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class ProductListSerializer(serializers.ModelSerializer):
+    """
+    상품 리스트 시리얼라이저
+    """
+
     user = serializers.CharField(source="user.username")
     average_rating = serializers.FloatField(read_only=True)
 
@@ -20,8 +27,11 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "price", "user", "stock", "average_rating"]
 
 
-# Product Serializer
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    상품 시리얼라이저
+    """
+
     average_rating = serializers.FloatField(read_only=True)
     username = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
@@ -54,10 +64,3 @@ class ProductSerializer(serializers.ModelSerializer):
             if request
             else []
         )
-
-
-# ProductImage Serializer
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ["id", "product", "image"]
