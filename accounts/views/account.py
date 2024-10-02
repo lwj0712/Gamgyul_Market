@@ -230,13 +230,15 @@ class PasswordChangeView(APIView):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        logout(request)
-        return Response(
-            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
-            status=status.HTTP_200_OK,
-        )
+        if serializer.is_valid():
+            serializer.save()
+            logout(request)
+            return Response(
+                {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDeactivateView(APIView):

@@ -92,6 +92,13 @@ class CustomPasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
+    def validate(self, data):
+        if data["old_password"] == data["new_password"]:
+            raise serializers.ValidationError(
+                "새 비밀번호는 이전 비밀번호와 달라야 합니다."
+            )
+        return data
+
     def validate_old_password(self, value):
         user = self.context["request"].user
         if not user.check_password(value):
