@@ -53,6 +53,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "average_rating",
             "images",
         ]
+        ref_name = "marketProductSerializer"
 
     def get_username(self, obj):
         return obj.user.username
