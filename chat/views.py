@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
 
@@ -101,7 +102,7 @@ class ChatRoomCreateView(generics.CreateAPIView):
 class ChatRoomDetailView(generics.RetrieveAPIView):
     """
     요청한 사용자가 해당 채팅방의 참여자라면 채팅방을 가져옴
-    채팅방에 입장할 때 읽지 않은 메세지 읽음 처리
+    채팅방에 입장할 때 읽지 않은 메시지 읽음 처리
     """
 
     serializer_class = ChatRoomSerializer
@@ -227,3 +228,48 @@ class MessageCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         chat_room = get_chat_room_or_404(self.request, self.kwargs["room_id"])
         serializer.save(sender=self.request.user, chat_room=chat_room)
+
+
+class MessageSearchView(generics.ListAPIView):
+    """
+    주어진 키워드를 포함하는 메시지를 검색
+    검색 결과가 없을 경우 빈 배열을 반환
+    검색 결과가 있을 경우 직렬화하여 응답 반환
+    """
+
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="채팅방 메시지 검색",
+        description="주어진 키워드를 포함하는 메시지를 검색합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="q", description="검색어", required=False, type=OpenApiTypes.STR
+            ),
+        ],
+        responses={200: MessageSerializer(many=True)},
+        tags=["message"],
+    )
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        if not queryset.exists():
+            return Response(
+                {"message": "검색된 메시지가 없습니다.", "results": []},
+                status=status.HTTP_200_OK,
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def get_queryset(self):
+        # Swagger 스키마 생성 시 오류 방지
+        if getattr(self, "swagger_fake_view", False):
+            return Message.objects.none()
+
+        chat_room = get_chat_room_or_404(self.request, self.kwargs["room_id"])
+        query = self.request.query_params.get("q")
+        if query:
+            return Message.objects.filter(chat_room=chat_room, content__icontains=query)
+        return Message.objects.filter(chat_room=chat_room)

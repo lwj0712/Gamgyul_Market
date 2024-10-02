@@ -145,6 +145,47 @@ class ChatRoomTestCase(APITestCase):
         message.refresh_from_db()
         self.assertTrue(message.is_read)
 
+    def test_message_search(self):
+        """
+        채팅방 메시지 검색 테스트: 키워드를 포함하는 메시지가 반환되는지 검증
+        존재하지 않는 키워드로 검색 시 '검색된 메시지가 없습니다' 반환
+        """
+        chatroom = ChatRoom.objects.filter(
+            participants__in=[self.user1, self.user2]
+        ).first()
+        if not chatroom:
+            chatroom = ChatRoom.objects.create()
+            chatroom.participants.set([self.user1, self.user2])
+
+        # 검색할 메시지 생성
+        Message.objects.create(
+            chat_room=chatroom, sender=self.user1, content="안녕하세요"
+        )
+
+        # URL 확인을 위한 로그 추가
+        url = reverse("chat:message_search", kwargs={"room_id": chatroom.id})
+        print(f"검색 URL: {url}")
+
+        # 1. 키워드 '안녕'으로 검색하여 '안녕하세요' 메시지를 찾는 테스트
+        url = reverse("chat:message_search", kwargs={"room_id": chatroom.id})
+        response = self.client.get(url, {"q": "안녕"}, format="json")
+
+        # 응답 상태 코드 로그 추가
+        print(f"응답 상태 코드: {response.status_code}")
+
+        # 검색된 메시지가 있을 때
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["content"], "안녕하세요")
+
+        # 2. 존재하지 않는 메시지를 검색
+        response = self.client.get(url, {"q": "없는 메시지"}, format="json")
+
+        # 검색된 메시지가 없을 때
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+        self.assertEqual(response.data["message"], "검색된 메시지가 없습니다.")
+
 
 class ChatRoomWebSocketTestCase(TransactionTestCase):
     """
