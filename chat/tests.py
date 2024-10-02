@@ -1,22 +1,26 @@
+import json, uuid
 from channels.testing import WebsocketCommunicator
-from django.urls import reverse
+from django.urls import reverse, re_path
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.test import Client, TransactionTestCase
 from channels.routing import URLRouter
 from asgiref.sync import async_to_sync, sync_to_async
-from django.urls import re_path
+from channels.auth import AuthMiddlewareStack
 from .models import ChatRoom, Message
 from .consumers import ChatConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.auth import AuthMiddlewareStack
-import json, uuid, asyncio
 
 User = get_user_model()
 
 
 class MockChatConsumer(AsyncWebsocketConsumer):
+    """
+    WebSocket 연결을 테스트하기 위한 MockChatConsumer.
+    메시지 수신 시 읽음 상태로 업데이트
+    """
+
     async def connect(self):
         await self.accept()
 
@@ -31,6 +35,7 @@ class MockChatConsumer(AsyncWebsocketConsumer):
                 is_read=True
             )
 
+        # 메시지 전송
         await self.send(
             text_data=json.dumps(
                 {"message": message, "message_id": message_id, "status": "received"}
@@ -41,7 +46,7 @@ class MockChatConsumer(AsyncWebsocketConsumer):
         pass
 
 
-# WebSocket 라우팅
+# WebSocket 라우팅 설정
 application = AuthMiddlewareStack(
     URLRouter(
         [
@@ -52,8 +57,14 @@ application = AuthMiddlewareStack(
 
 
 class ChatRoomTestCase(APITestCase):
+    """
+    ChatRoom API 관련 테스트
+    """
+
     def setUp(self):
-        # 테스트에 사용할 사용자 계정 생성
+        """
+        테스트용 사용자 생성 및 로그인 처리
+        """
         self.user1 = User.objects.create_user(
             username="user1", password="password123", nickname="user1_nickname"
         )
@@ -64,15 +75,14 @@ class ChatRoomTestCase(APITestCase):
             username="user3", password="password123", nickname="user3_nickname"
         )
 
-        # 로그인 및 인증 설정
+        # 로그인 설정
         self.client = APIClient()
         self.client.login(username="user1", password="password123")
 
     def test_chatroom_creation(self):
         """
-        채팅방 생성 테스트: 새로운 채팅방이 성공적으로 생성되는지 검증합니다.
+        채팅방 생성 테스트: 새로운 채팅방이 성공적으로 생성되는지 검증
         """
-
         url = reverse("chat:room_create")
         data = {"participants": ["user2"]}  # user1은 자동으로 추가됨
         response = self.client.post(url, data, format="json")
@@ -82,26 +92,23 @@ class ChatRoomTestCase(APITestCase):
 
     def test_duplicate_chatroom_creation(self):
         """
-        중복 채팅방 생성 방지 테스트: 동일한 참가자로 두 번째 채팅방 생성 시도를 막는지 검증합니다.
+        중복 채팅방 생성 방지 테스트: 동일한 참가자로 두 번째 채팅방 생성 시도 금지
         """
-
         url = reverse("chat:room_create")
         data = {"participants": ["user2"]}
 
         # 첫 번째 방 생성
         self.client.post(url, data, format="json")
 
-        # 같은 참가자로 또 생성 시도
+        # 같은 참가자로 두 번째 생성 시도
         response = self.client.post(url, data, format="json")
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data[0], "이미 이 사용자와의 채팅방이 존재합니다.")
 
     def test_invalid_participants(self):
         """
-        유효하지 않은 참가자 처리 테스트: 참가자가 두 명이 아닐 때 에러를 반환하는지 검증합니다.
+        유효하지 않은 참가자 처리 테스트: 두 명이 아닌 참가자가 있을 경우 오류 발생.
         """
-
         url = reverse("chat:room_create")
         data = {"participants": ["user2", "user3"]}  # 세 명 이상일 때
 
@@ -111,9 +118,8 @@ class ChatRoomTestCase(APITestCase):
 
     def test_chatroom_leave(self):
         """
-        채팅방 나가기 테스트: 사용자가 채팅방에서 성공적으로 나갈 수 있는지 검증합니다.
+        채팅방 나가기 테스트: 사용자가 채팅방에서 성공적으로 나갈 수 있는지 검증
         """
-
         chatroom = ChatRoom.objects.create()
         chatroom.participants.set([self.user1, self.user2])
 
@@ -125,9 +131,8 @@ class ChatRoomTestCase(APITestCase):
 
     def test_message_read_on_chatroom_entry(self):
         """
-        채팅방 입장 시 메시지 읽음 처리 테스트: 채팅방에 입장하면 기존 메시지가 읽음으로 표시되는지 검증합니다.
+        채팅방 입장 시 메시지 읽음 처리 테스트: 입장 시 기존 메시지가 읽음으로 표시되는지 검증
         """
-
         chatroom = ChatRoom.objects.create()
         chatroom.participants.set([self.user1, self.user2])
         message = Message.objects.create(
@@ -142,8 +147,14 @@ class ChatRoomTestCase(APITestCase):
 
 
 class ChatRoomWebSocketTestCase(TransactionTestCase):
+    """
+    WebSocket을 통한 채팅방 메시지 처리 테스트
+    """
+
     def setUp(self):
-        # 테스트에 사용할 사용자 계정 생성
+        """
+        테스트용 사용자 및 채팅방 생성
+        """
         self.user1 = User.objects.create_user(
             username="user1", password="password123", nickname=f"user1_{uuid.uuid4()}"
         )
@@ -167,9 +178,8 @@ class ChatRoomWebSocketTestCase(TransactionTestCase):
 
     async def test_message_read_websocket(self):
         """
-        WebSocket 메시지 읽음 처리 테스트: WebSocket을 통해 메시지를 수신하면 메시지가 읽음으로 표시되는지 검증합니다.
+        WebSocket 메시지 읽음 처리 테스트: 메시지 수신 시 읽음 처리 여부 검증
         """
-
         websocket_url = f"/ws/chat/{self.chat_room.id}/"
 
         # 세션 키를 헤더에 포함
