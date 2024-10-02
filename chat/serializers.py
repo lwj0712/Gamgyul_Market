@@ -13,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email"]
+        ref_name = "ChatAppUser"  # Serializer 충돌 방지
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
