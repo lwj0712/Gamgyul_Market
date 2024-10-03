@@ -11,7 +11,7 @@ class Post(models.Model):
     location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    tags = TaggableManager()
+    tags = TaggableManager(blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
@@ -19,18 +19,10 @@ class Post(models.Model):
 
 class PostImage(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="post_images/")
+    image = models.ImageField(upload_to="media/insta/")
 
     def __str__(self):
         return f"Image for {self.post.user.username}"
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(post__images__count__lte=10),
-                name="max_10_images_per_post",
-            )
-        ]
 
 
 class Comment(models.Model):
