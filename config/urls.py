@@ -15,6 +15,7 @@ urlpatterns = [
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),
+    path("insta/", include("insta.urls")),
     # swagger 설정
     path(
         "api/schema/", SpectacularAPIView.as_view(), name="schema"
