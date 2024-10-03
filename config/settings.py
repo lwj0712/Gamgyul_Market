@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "allauth.socialaccount.providers.google",  # Google 로그인을 사용할 경우
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     "corsheaders",
     "imagekit",
     "crispy_forms",
@@ -160,8 +161,13 @@ REST_FRAMEWORK = {
 
 # drf_spectacular swagger 세팅
 SPECTACULAR_SETTINGS = {
-    "TITLE": "감귤마켓 API",
-    "DESCRIPTION": "감귤마켓은 instagram 기반으로 감귤을 거래할 수 있는 웹입니다.",
+    "TITLE": "감귤하우스 API",
+    "DESCRIPTION": "감귤하우스는 상품(감귤)을 홍보하고 거래할 수 있는 SNS입니다.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,  # API 스키마 파일을 Swagger나 Redoc UI에서 직접 노출할지 여부
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
 }
 
 # JWT 설정
@@ -203,7 +209,7 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-SITE_ID = 2
+SITE_ID = 3
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = "my-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "my-refresh-token"

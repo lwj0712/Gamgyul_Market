@@ -1,4 +1,6 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from .views import account, profile
 
 app_name = "accounts"
@@ -41,3 +43,6 @@ urlpatterns = [
     # 프로필 검색
     path("search/", profile.ProfileSearchView.as_view(), name="profile_search"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
