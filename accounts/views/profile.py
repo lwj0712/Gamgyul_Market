@@ -87,7 +87,7 @@ class ProfileUpdateView(generics.UpdateAPIView):
         responses={200: ProfileUpdateSerializer},
         examples=[
             OpenApiExample(
-                "Profile Update Example",
+                "프로필 업데이트 예시",
                 value={
                     "nickname": "새로운닉네임",
                     "bio": "새로운 자기소개",
@@ -109,7 +109,7 @@ class ProfileUpdateView(generics.UpdateAPIView):
         responses={200: ProfileUpdateSerializer},
         examples=[
             OpenApiExample(
-                "Profile Partial Update Example",
+                "프로필 부분 업데이트 예제",
                 value={
                     "nickname": "새로운닉네임",
                 },
@@ -153,7 +153,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Input",
+                "유효한 입력",
                 value={
                     "follower_can_see_email": False,
                     "follower_can_see_bio": True,
@@ -191,7 +191,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Partial Input",
+                "유효한 부분 입력",
                 value={
                     "follower_can_see_email": True,
                     "others_can_see_posts": False,
@@ -288,25 +288,25 @@ class FollowView(generics.CreateAPIView):
                 status_codes=["201"],
             ),
             OpenApiExample(
-                "Error: Self Follow",
+                "오류: 자기 팔로우",
                 value={"detail": "자기 자신을 팔로우할 수 없습니다."},
                 response_only=True,
                 status_codes=["400"],
             ),
             OpenApiExample(
-                "Error: Already Following",
+                "오류: 이미 팔로우 중",
                 value={"detail": "이미 팔로우한 사용자입니다."},
                 response_only=True,
                 status_codes=["400"],
             ),
             OpenApiExample(
-                "Error: User Not Found",
+                "오류: 사용자를 찾을 수 없음",
                 value={"detail": "팔로우하려는 사용자를 찾을 수 없습니다."},
                 response_only=True,
                 status_codes=["400"],
             ),
             OpenApiExample(
-                "Error: Server Error",
+                "오류: 서버 오류",
                 value={"detail": "팔로우 처리 중 오류가 발생했습니다."},
                 response_only=True,
                 status_codes=["500"],
@@ -433,7 +433,7 @@ class ProfileSearchView(generics.ListAPIView):
         responses={200: ProfileSearchSerializer(many=True)},
         examples=[
             OpenApiExample(
-                "Example Response",
+                "응답 예시",
                 value=[
                     {
                         "id": 1,

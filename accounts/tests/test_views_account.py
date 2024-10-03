@@ -33,7 +33,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_signup_view(self):
         """회원가입 테스트"""
-
         url = reverse("accounts:signup")
         data = {
             "username": "newuser",
@@ -47,7 +46,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_signup_view_duplicate_username(self):
         """username 중복 에러 테스트"""
-
         url = reverse("accounts:signup")
         data = {
             "username": "testuser",
@@ -60,7 +58,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_signup_view_duplicate_nickname(self):
         """nickname 중복 에러 테스트"""
-
         url = reverse("accounts:signup")
         data = {
             "username": "newuser",
@@ -73,7 +70,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_signup_view_duplicate_email(self):
         """email 중복 에러 테스트"""
-
         url = reverse("accounts:signup")
         data = {
             "username": "newuser",
@@ -86,7 +82,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_login_view(self):
         """로그인 테스트"""
-
         url = reverse("accounts:login")
         data = {"username": "testuser", "password": "testpassword123"}
         response = self.client.post(url, data)
@@ -95,7 +90,6 @@ class SignUpLoginTestCase(BaseTestCase):
 
     def test_login_view_invalid_credentials(self):
         """비밀번호 잘못 입력 시 에러 테스트"""
-
         url = reverse("accounts:login")
         data = {"username": "testuser", "password": "wrongpassword"}
         response = self.client.post(url, data)
@@ -115,7 +109,6 @@ class InactiveUserTestCase(BaseTestCase):
 
     def test_login_view_inactive_account(self):
         """비활성화된 계정 로그인 시 에러 테스트"""
-
         url = reverse("accounts:login")
         data = {"username": "testuser", "password": "testpassword123"}
         response = self.client.post(url, data)
@@ -130,7 +123,6 @@ class InactiveUserTestCase(BaseTestCase):
 
     def test_request_reactivation_view(self):
         """비활성화된 계정 재활성 요청 테스트"""
-
         url = reverse("accounts:request_reactivation")
         data = {"email": "test@example.com"}
         response = self.client.post(url, data)
@@ -139,7 +131,6 @@ class InactiveUserTestCase(BaseTestCase):
 
     def test_activate_account_view(self):
         """비활성화된 계정 활성화 테스트"""
-
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         token = default_token_generator.make_token(self.user)
         url = reverse(
@@ -163,14 +154,12 @@ class AuthenticatedUserTestCase(BaseTestCase):
 
     def test_logout_view(self):
         """로그아웃 테스트"""
-
         url = reverse("accounts:logout")
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_user_deactivate_view(self):
         """로그인된 사용자 계정 비활성화 테스트"""
-
         url = reverse("accounts:user_deactivate")
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -178,7 +167,6 @@ class AuthenticatedUserTestCase(BaseTestCase):
 
     def test_user_delete_view(self):
         """로그인된 사용자 계정 삭제 테스트"""
-
         url = reverse("accounts:user_delete")
         data = {"confirmation": "DELETE"}
         response = self.client.post(url, data)
@@ -199,7 +187,6 @@ class PasswordChangeTestCase(BaseTestCase):
 
     def test_successful_password_change(self):
         """비밀번호 변경 성공 테스트"""
-
         data = {"old_password": "testpassword123", "new_password": "newpassword123"}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -214,7 +201,6 @@ class PasswordChangeTestCase(BaseTestCase):
 
     def test_wrong_old_password(self):
         """이전 비밀번호가 올바르지 않음 테스트"""
-
         data = {"old_password": "wrongpassword", "new_password": "newpassword456"}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -224,7 +210,6 @@ class PasswordChangeTestCase(BaseTestCase):
 
     def test_new_password_same_as_old(self):
         """새 비밀번호가 이전 비밀번호와 같음 테스트"""
-
         data = {"old_password": "testpassword123", "new_password": "testpassword123"}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -235,7 +220,6 @@ class PasswordChangeTestCase(BaseTestCase):
 
     def test_new_password_too_short(self):
         """새 비밀번호가 짦음 테스트"""
-
         data = {"old_password": "testpassword123", "new_password": "short"}
         response = self.client.put(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -249,14 +233,12 @@ class UnauthenticatedUserTestCase(BaseTestCase):
 
     def test_logout_view_unauthenticated(self):
         """비로그인된 사용자 로그아웃 시 에러 테스트"""
-
         url = reverse("accounts:logout")
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_password_change_unauthenticated(self):
         """비로그인된 사용자 비밀번호 변경 시 에러 테스트"""
-
         url = reverse("accounts:change_password")
         data = {"old_password": "testpassword123", "new_password": "newpassword123"}
         response = self.client.put(url, data)

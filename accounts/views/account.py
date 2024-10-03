@@ -193,7 +193,7 @@ class PasswordChangeView(APIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Input",
+                "유효한 입력",
                 value={
                     "old_password": "current_password123",
                     "new_password": "securepassword456",
@@ -201,22 +201,22 @@ class PasswordChangeView(APIView):
                 request_only=True,
             ),
             OpenApiExample(
-                "Success Response",
+                "성공 응답",
                 value={
                     "detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."
                 },
                 response_only=True,
             ),
             OpenApiExample(
-                "Error: Same Password",
+                "오류: 동일한 비밀번호",
                 value={
-                    "non_field_errors": ["새 비밀번호는 이전 비밀번호와 달라야 합니다."]
+                    "non_field_errors": "새 비밀번호는 이전 비밀번호와 달라야 합니다."
                 },
                 response_only=True,
             ),
             OpenApiExample(
-                "Error: Incorrect Old Password",
-                value={"old_password": ["이전 비밀번호가 올바르지 않습니다."]},
+                "오류: 이전 비밀번호가 올바르지 않음",
+                value={"old_password": "이전 비밀번호가 올바르지 않습니다."},
                 response_only=True,
             ),
         ],
@@ -299,7 +299,7 @@ class RequestReactivationView(APIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Request",
+                "유효한 요청",
                 summary="유효한 요청 예시",
                 description="비활성화된 계정의 이메일 주소",
                 value={"email": "user@example.com"},
