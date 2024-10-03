@@ -3,6 +3,11 @@ from django.contrib.auth import get_user_model
 
 
 class CustomAuthBackend(ModelBackend):
+    """
+    authenticate 메서드는 is_active=False면 user 인식 불가
+    is_active = False여도 check_password 하고 user 인식
+    """
+
     def authenticate(self, request, username=None, password=None, **kwargs):
         UserModel = get_user_model()
         try:
@@ -10,7 +15,6 @@ class CustomAuthBackend(ModelBackend):
         except UserModel.DoesNotExist:
             return None
 
-        # 활성화 프로세스를 위한 특별한 경우 추가
         if password is None and kwargs.get("activate", False):
             return user
 
