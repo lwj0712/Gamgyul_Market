@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -10,6 +12,7 @@ from drf_spectacular.views import (
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("chat/", include("chat.urls")),
+    path("alarm/", include("alarm.urls")),
     path("market/", include("market.urls")),
     path("dj-rest-auth/", include("dj_rest_auth.urls")),
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
@@ -32,3 +35,6 @@ urlpatterns = [
     ),  # API 문서화를 위한 UI
     path("docs/json/", SpectacularJSONAPIView.as_view(), name="schema-json"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
