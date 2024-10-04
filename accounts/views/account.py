@@ -1,3 +1,10 @@
+from django.conf import settings
+from django.contrib.auth import login, get_user_model, logout, authenticate
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.urls import reverse
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,21 +16,6 @@ from drf_spectacular.utils import (
     OpenApiResponse,
 )
 from drf_spectacular.types import OpenApiTypes
-from django.conf import settings
-from django.contrib.auth import login, get_user_model, logout, authenticate
-from django.contrib.auth.tokens import (
-    default_token_generator,
-)  # Django에서 제공하는 토큰 생성기, 보안 관련 작업에 사용, 토큰은 시간이 지나면 만료
-from django.utils.http import (
-    urlsafe_base64_encode,  # base64_문자열로 인코딩
-    urlsafe_base64_decode,  # 문자열을 원래 데이터로 디코팅
-)
-from django.utils.encoding import (
-    force_bytes,  # 주어진 문자열을 바이트 문자열로 변환
-    force_str,  # 바이트 문자열을 일반 문자열로 변환
-)
-from django.core.mail import send_mail  # 이메일 전송 기능
-from django.urls import reverse
 from accounts.serializers import (
     UserSerializer,
     CustomLoginSerializer,
@@ -35,10 +27,6 @@ User = get_user_model()
 
 
 class SignUpView(generics.CreateAPIView):
-    """
-    회원가입 API View
-    userserializer 사용
-    """
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -71,10 +59,6 @@ class SignUpView(generics.CreateAPIView):
 
 
 class LoginView(APIView):
-    """
-    로그인 API View
-    비활성화된 계정일 시, 재활성화 질문
-    """
 
     permission_classes = [AllowAny]
     serializer_class = CustomLoginSerializer
@@ -113,6 +97,10 @@ class LoginView(APIView):
         tags=["account"],
     )
     def post(self, request):
+        """
+        serializer 값 받아 유효성 검사
+        비활성화 유저 로그인 시 재활성화 질문
+        """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data["username"]
@@ -142,9 +130,6 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
-    """
-    로그아웃 API View
-    """
 
     permission_classes = [IsAuthenticated]
 
@@ -172,11 +157,6 @@ class LogoutView(APIView):
 
 
 class PasswordChangeView(APIView):
-    """
-    비밀번호 변경 API View
-    serializer 유효성 검사 후 저장
-    저장 후 로그아웃 기능
-    """
 
     serializer_class = CustomPasswordChangeSerializer
     permission_classes = [IsAuthenticated]
@@ -200,6 +180,10 @@ class PasswordChangeView(APIView):
                     "properties": {
                         "old_password": {"type": "array", "items": {"type": "string"}},
                         "new_password": {"type": "array", "items": {"type": "string"}},
+                        "non_field_errors": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },  # 이전과 새 비밀번호가 동일할 때 특정 필드에 속하지 X
                     },
                 },
             ),
@@ -209,7 +193,7 @@ class PasswordChangeView(APIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Input",
+                "유효한 입력",
                 value={
                     "old_password": "current_password123",
                     "new_password": "securepassword456",
@@ -217,35 +201,47 @@ class PasswordChangeView(APIView):
                 request_only=True,
             ),
             OpenApiExample(
-                "Success Response",
+                "성공 응답",
                 value={
                     "detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."
                 },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "오류: 동일한 비밀번호",
+                value={
+                    "non_field_errors": "새 비밀번호는 이전 비밀번호와 달라야 합니다."
+                },
+                response_only=True,
+            ),
+            OpenApiExample(
+                "오류: 이전 비밀번호가 올바르지 않음",
+                value={"old_password": "이전 비밀번호가 올바르지 않습니다."},
                 response_only=True,
             ),
         ],
         tags=["account"],
     )
     def put(self, request, *args, **kwargs):
+        """
+        serializer 유효성 검사 통과 시 비밀번호 업데이트
+        업데이트 후 로그아웃
+        """
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        logout(request)
-        return Response(
-            {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
-            status=status.HTTP_200_OK,
-        )
+        if serializer.is_valid():
+            serializer.save()
+            logout(request)
+            return Response(
+                {"detail": "패스워드가 올바르게 변경되었습니다. 다시 로그인해주세요."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserDeactivateView(APIView):
-    """
-    계정 비활성화 API View
-    user.is_active = False로 계정 로그인 불가
-    이후 계정을 다시 활성화 가능
-    비활성화 유저 로그아웃 처리
-    """
 
     permission_classes = [IsAuthenticated]
 
@@ -271,6 +267,10 @@ class UserDeactivateView(APIView):
         tags=["account"],
     )
     def post(self, request):
+        """
+        user.is_active = False로 계정 로그인 불가
+        비활성화 유저 로그아웃 처리
+        """
         user = request.user
         user.is_active = False
         user.save()
@@ -282,9 +282,6 @@ class UserDeactivateView(APIView):
 
 
 class RequestReactivationView(APIView):
-    """
-    재활성화 요청 처리 API View
-    """
 
     @extend_schema(
         summary="계정 재활성화 요청",
@@ -302,7 +299,7 @@ class RequestReactivationView(APIView):
         },
         examples=[
             OpenApiExample(
-                "Valid Request",
+                "유효한 요청",
                 summary="유효한 요청 예시",
                 description="비활성화된 계정의 이메일 주소",
                 value={"email": "user@example.com"},
@@ -328,30 +325,30 @@ class RequestReactivationView(APIView):
         tags=["account"],
     )
     def post(self, request):
-        email = request.data.get("email")  # email get으로 받아오기
+        """
+        비활성화 유저의 메일 정보 받아옴
+        토큰 발행으로 인증 구현
+        인코딩으로 데이터 압축
+        """
+        email = request.data.get("email")
         try:
-            user = User.objects.get(
-                email=email, is_active=False
-            )  # 비활성화 유저의 메일이라면 받아옴
+            user = User.objects.get(email=email, is_active=False)
         except User.DoesNotExist:
             return Response(
                 {"detail": "해당 이메일의 비활성화된 계정을 찾을 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        token = default_token_generator.make_token(user)  # 토큰 발행
-        uid = urlsafe_base64_encode(force_bytes(user.pk))  # 인코딩
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = request.build_absolute_uri(
-            reverse(
-                "accounts:activate_account", kwargs={"uidb64": uid, "token": token}
-            )  # activate account에 해당하는 url 패턴에 uid, token 전달
+            reverse("accounts:activate_account", kwargs={"uidb64": uid, "token": token})
         )
-        # 이메일 보냄
         send_mail(
             "계정 재활성화",
             f"계정을 재활성화하려면 다음 링크를 클릭하세요: {activation_link}",
-            settings.DEFAULT_FROM_EMAIL,  # 발신자
-            [email],  # 수신자
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
             fail_silently=False,
         )
 
@@ -362,11 +359,6 @@ class RequestReactivationView(APIView):
 
 
 class ActivateAccountView(APIView):
-    """
-    유저 활성화 API View
-    전달받은 uid 디코딩
-    토큰 유효성 검사 이후 활성화 True로 바꿈
-    """
 
     @extend_schema(
         summary="계정 활성화",
@@ -406,6 +398,13 @@ class ActivateAccountView(APIView):
         tags=["account"],
     )
     def get(self, request, uidb64, token):
+        """
+        유저 활성화 API View
+        전달 받은 uid 디코딩으로 원래 형태로 저장
+        토큰 유효성 검사 이후 활성화 True로 바꿈
+        값을 받아올 때 CustomAuth로 백엔드 지정해서 백엔드 중복 문제 해결
+        비밀번호 확인 뛰어넘기, 이미 로그인할 때 확인했음
+        """
 
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -416,11 +415,7 @@ class ActivateAccountView(APIView):
         if user is not None and default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-
-            # CustomAuth로 백엔드 지정, 백엔드 중복 문제 해결
             backend = CustomAuthBackend()
-
-            # 비밀번호 검증 건너뜀
             authenticated_user = backend.authenticate(
                 request, username=user.username, password=None, activate=True
             )
@@ -448,9 +443,6 @@ class ActivateAccountView(APIView):
 
 
 class UserDeleteView(APIView):
-    """
-    계정 삭제 API View
-    """
 
     permission_classes = [IsAuthenticated]
 
