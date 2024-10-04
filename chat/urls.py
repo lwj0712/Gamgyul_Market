@@ -8,6 +8,11 @@ urlpatterns = [
     path("create/", views.ChatRoomCreateView.as_view(), name="room_create"),
     path("<uuid:room_id>/", views.ChatRoomDetailView.as_view(), name="room_detail"),
     path(
+        "<uuid:room_id>/leave/",
+        views.ChatRoomLeaveView.as_view(),
+        name="room_leave",
+    ),
+    path(
         "<uuid:room_id>/messages/",
         views.MessageListView.as_view(),
         name="message_list",
@@ -18,8 +23,8 @@ urlpatterns = [
         name="message_create",
     ),
     path(
-        "<uuid:room_id>/leave/",
-        views.ChatRoomLeaveView.as_view(),
-        name="room_leave",
+        "<uuid:room_id>/messages/search/",
+        views.MessageSearchView.as_view(),
+        name="message_search",
     ),
 ]

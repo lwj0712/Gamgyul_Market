@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -16,6 +18,7 @@ urlpatterns = [
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),
+    path("insta/", include("insta.urls")),
     # swagger 설정
     path(
         "api/schema/", SpectacularAPIView.as_view(), name="schema"
@@ -32,3 +35,6 @@ urlpatterns = [
     ),  # API 문서화를 위한 UI
     path("docs/json/", SpectacularJSONAPIView.as_view(), name="schema-json"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
