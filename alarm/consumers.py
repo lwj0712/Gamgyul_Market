@@ -13,15 +13,13 @@ class AlarmConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        async def disconnect(self, close_code):
-            # 그룹에서 사용자 제거
-            await self.channel_layer.group_discard(
-                self.room_group_name, self.channel_name
-            )
+    async def disconnect(self, close_code):
+        # 그룹에서 사용자 제거
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-        # 알림 메시지 수신 시 실행
-        async def send_alarm(self, event):
-            alarm = event["alarm"]
+    # 알림 메시지 수신 시 실행
+    async def send_alarm(self, event):
+        alarm = event["alarm"]
 
-            # 메시지를 WebSocket을 통해 클라이언트로 전송
-            await self.send(text_data=json.dumps({"alarm": alarm}))
+        # 메시지를 WebSocket을 통해 클라이언트로 전송
+        await self.send(text_data=json.dumps({"alarm": alarm}))
