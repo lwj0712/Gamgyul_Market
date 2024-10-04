@@ -42,8 +42,8 @@ def create_alarm_for_new_message(sender, instance, created, **kwargs):
 def create_alarm_for_new_follower(sender, instance, created, **kwargs):
     if created:
         # 팔로우가 생성되었을 때 팔로우된 사람에게 알림 생성
-        recipient = instance.followed_user  # 팔로우된 사람
-        sender = instance.follower_user  # 팔로우한 사람
+        recipient = instance.following  # 팔로우된 사람
+        sender = instance.follower  # 팔로우한 사람
 
         Alarm.objects.create(
             recipient=recipient,
@@ -58,8 +58,8 @@ def create_alarm_for_new_follower(sender, instance, created, **kwargs):
 def create_alarm_for_new_comment(sender, instance, created, **kwargs):
     if created:
         # 댓글이 달린 게시물의 작성자에게 알림 생성
-        recipient = instance.post.author  # 게시물 작성자
-        sender = instance.author  # 댓글 작성자
+        recipient = instance.post.user  # 게시물 작성자
+        sender = instance.user  # 댓글 작성자
 
         Alarm.objects.create(
             recipient=recipient,
@@ -74,7 +74,7 @@ def create_alarm_for_new_comment(sender, instance, created, **kwargs):
 def create_alarm_for_new_like(sender, instance, created, **kwargs):
     if created:
         # 좋아요가 달린 게시물의 작성자에게 알림 생성
-        recipient = instance.post.author  # 게시물 작성자
+        recipient = instance.post.user  # 게시물 작성자
         sender = instance.user  # 좋아요를 남긴 사용자
 
         Alarm.objects.create(
