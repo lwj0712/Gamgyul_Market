@@ -1,9 +1,10 @@
 from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from market.models import Receipt
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from insta.models import Post
 from accounts.serializers import ProfileSearchSerializer
 
@@ -13,6 +14,20 @@ User = get_user_model()
 class FriendRecommendationView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="친구 추천",
+        description="현재 로그인한 사용자에게 최대 15명의 친구를 추천합니다. 추천 기준은 공통 팔로워, 공통 관심사(해시태그), 인기도 등입니다.",
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                response=ProfileSearchSerializer(many=True),
+                description="추천된 사용자 목록",
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description="인증되지 않은 사용자",
+            ),
+        },
+        tags=["profile"],
+    )
     def get(self, request):
         user = request.user
         recommended_users = set()
