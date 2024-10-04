@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from market.models import Receipt
 from insta.models import Post
 from taggit.models import Tag
+from itertools import count
 
 User = get_user_model()
 
@@ -21,17 +22,23 @@ class FriendRecommendationViewTestCase(APITestCase):
             username="testuser", password="testpass123", nickname="testuser"
         )
         self.client.force_authenticate(user=self.user)
+        self.user_counter = count(1)
 
-    def create_user(self, username):
-        return User.objects.create_user(username=username, password="testpass123")
+    def create_user(self, username=None):
+        counter = next(self.user_counter)
+        if username is None:
+            username = f"testuser{counter}"
+        return User.objects.create_user(
+            username=username,
+            password="testpass123",
+            nickname=f"testnick{counter}",
+            email=f"{username}@example.com",
+        )
 
     def create_post(self, user, tags):
         post = Post.objects.create(user=user, content="Test post")
         post.tags.add(*tags)
         return post
-
-    def create_receipt(self, buyer, seller):
-        return Receipt.objects.create(buyer=buyer, seller=seller)
 
     def test_common_followers_recommendation(self):
         """팔로워 기반 추천 테스트"""
@@ -63,18 +70,6 @@ class FriendRecommendationViewTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) > 0)
         self.assertTrue(any(r["username"] == "otheruser" for r in response.data))
-
-    def test_transaction_recommendation(self):
-        """거래 기반 추천 테스트"""
-        transaction_user = self.create_user("transactionuser")
-
-        self.create_receipt(buyer=self.user, seller=transaction_user)
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) > 0)
-        self.assertTrue(any(r["username"] == "transactionuser" for r in response.data))
 
     def test_popular_users_recommendation(self):
         """

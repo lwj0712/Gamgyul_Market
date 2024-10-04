@@ -65,26 +65,6 @@ class FriendRecommendationView(APIView):
                 break
 
         """
-        최근 거래한 유저 추천
-        현재 사용자가 거래한 기록(구매자, 판매자일 경우 모두)에서 팔로워, 중복 제외
-        자기 자신 아이디도 제거 후 추천 목록에 추가
-        """
-        recent_transaction_users = (
-            Receipt.objects.filter(Q(buyer=user) | Q(seller=user))
-            .exclude(Q(buyer__in=following_users) | Q(seller__in=following_users))
-            .values_list("buyer", "seller")
-            .distinct()
-        )
-
-        for buyer, seller in recent_transaction_users:
-            if buyer != user.id:
-                recommended_users.add(buyer)
-            if seller != user.id:
-                recommended_users.add(seller)
-            if len(recommended_users) >= 15:
-                break
-
-        """
         팔로워가 없는 경우(초기 유저 포함), 유저 중에서 팔로워 수가 많은 순으로 추천
         """
         if not following_users:

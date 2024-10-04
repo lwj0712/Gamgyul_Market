@@ -1,15 +1,16 @@
 from django.urls import reverse
-from rest_framework.test import APITestCase
+from rest_framework.test import APITransactionTestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from accounts.models import Follow, PrivacySettings
+from django.db import connection
 
 User = get_user_model()
 
 
-class BaseProfileTestCase(APITestCase):
+class ProfileDetailViewTestCase(APITransactionTestCase):
     """
-    기본 세팅 유저
+    프로필 조회 및 존재하지 않는 프로필 요청 테스트
     """
 
     def setUp(self):
@@ -27,12 +28,6 @@ class BaseProfileTestCase(APITestCase):
         )
         self.client.force_authenticate(user=self.user1)
 
-
-class ProfileDetailViewTestCase(BaseProfileTestCase):
-    """
-    프로필 조회 및 존재하지 않는 프로필 요청 테스트
-    """
-
     def test_profile_detail_view(self):
         """프로필 조회 테스트"""
         url = reverse(
@@ -49,11 +44,20 @@ class ProfileDetailViewTestCase(BaseProfileTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class ProfileUpdateViewTestCase(BaseProfileTestCase):
+class ProfileUpdateViewTestCase(APITransactionTestCase):
     """
     프로필 수정 테스트
     전체 업데이트 및 부분 업데이트 테스트
     """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@example.com",
+            password="testpassword123",
+            nickname="TestUser",
+        )
+        self.client.force_authenticate(user=self.user)
 
     def test_profile_update_view(self):
         """전체 업데이트(put request) 테스트"""
@@ -72,13 +76,19 @@ class ProfileUpdateViewTestCase(BaseProfileTestCase):
         self.assertEqual(response.data["bio"], "Partially updated bio")
 
 
-class PrivacySettingsViewTestCase(BaseProfileTestCase):
+class PrivacySettingsViewTestCase(APITransactionTestCase):
     """
     프로필 정보 보호 설정 조회 및 수정 테스트
     """
 
     def setUp(self):
-        super().setUp()
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@example.com",
+            password="testpassword123",
+            nickname="TestUser",
+        )
+        self.client.force_authenticate(user=self.user)
         self.url = reverse("accounts:privacy_settings")
 
     def test_privacy_settings_get(self):
@@ -134,16 +144,31 @@ class PrivacySettingsViewTestCase(BaseProfileTestCase):
 
     def test_privacy_settings_nonexistent(self):
         """프로필 보호 설정이 없는 경우 테스트"""
-        PrivacySettings.objects.filter(user=self.user1).delete()
+        PrivacySettings.objects.filter(user=self.user).delete()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("follower_can_see_email", response.data)
 
 
-class FollowViewTestCase(BaseProfileTestCase):
+class FollowViewTestCase(APITransactionTestCase):
     """
     팔로우 기능 테스트
     """
+
+    def setUp(self):
+        self.user1 = User.objects.create_user(
+            username="testuser1",
+            email="testuser1@example.com",
+            password="testpassword123",
+            nickname="TestUser1",
+        )
+        self.user2 = User.objects.create_user(
+            username="testuser2",
+            email="testuser2@example.com",
+            password="testpassword123",
+            nickname="TestUser2",
+        )
+        self.client.force_authenticate(user=self.user1)
 
     def test_follow_user(self):
         """팔로우 테스트"""
@@ -179,14 +204,26 @@ class FollowViewTestCase(BaseProfileTestCase):
         self.assertEqual(response.data["detail"], "이미 팔로우한 사용자입니다.")
 
 
-class UnfollowViewTestCase(BaseProfileTestCase):
+class UnfollowViewTestCase(APITransactionTestCase):
     """
     언팔로우 기능 테스트
     """
 
     def setUp(self):
-        super().setUp()
+        self.user1 = User.objects.create_user(
+            username="testuser1",
+            email="testuser1@example.com",
+            password="testpassword123",
+            nickname="TestUser1",
+        )
+        self.user2 = User.objects.create_user(
+            username="testuser2",
+            email="testuser2@example.com",
+            password="testpassword123",
+            nickname="TestUser2",
+        )
         Follow.objects.create(follower=self.user1, following=self.user2)
+        self.client.force_authenticate(user=self.user1)
 
     def test_unfollow_user(self):
         """언팔로우 테스트"""
@@ -214,32 +251,56 @@ class UnfollowViewTestCase(BaseProfileTestCase):
         )
 
 
-class ProfileSearchViewTestCase(BaseProfileTestCase):
-    """
-    프로필 검색 기능 테스트
-    """
+class ProfileSearchViewTestCase(APITransactionTestCase):
+    def setUp(self):
+        User.objects.all().delete()
+        self.user1 = User.objects.create_user(
+            username="testuser1",
+            password="12345",
+            email="test1@example.com",
+            nickname="TestUser1",
+        )
+        self.user2 = User.objects.create_user(
+            username="testuser2",
+            password="12345",
+            email="test2@example.com",
+            nickname="TestUser2",
+        )
+        self.user3 = User.objects.create_user(
+            username="otheruser",
+            password="12345",
+            email="other@example.com",
+            nickname="OtherUser",
+        )
+        self.client.force_authenticate(user=self.user1)
 
     def test_profile_search(self):
         """
         프로필 검색 테스트
         두 명의 사용자가 검색되어야 함
         """
-
         url = reverse("accounts:profile_search")
         response = self.client.get(url, {"q": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        print(f"Response data: {response.data}")
+        self.assertEqual(response.data["count"], 2)
 
     def test_profile_search_no_query(self):
         """쿼리가 없는 경우 빈 결과 반환 테스트"""
         url = reverse("accounts:profile_search")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        print(f"Response data: {response.data}")
+        self.assertEqual(response.data["count"], 0)
 
     def test_profile_search_no_results(self):
         """쿼리에 일치하는 사용자가 없는 경우 빈 결과 반환 테스트"""
         url = reverse("accounts:profile_search")
         response = self.client.get(url, {"q": "nonexistent"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        print(f"Response data: {response.data}")
+        self.assertEqual(response.data["count"], 0)
+
+    def tearDown(self):
+        User.objects.all().delete()
+        print(f"User count after tearDown: {User.objects.count()}")
