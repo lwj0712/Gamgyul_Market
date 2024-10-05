@@ -3,7 +3,6 @@ from rest_framework.test import APITransactionTestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from accounts.models import Follow, PrivacySettings
-from django.db import connection
 
 User = get_user_model()
 
@@ -18,13 +17,11 @@ class ProfileDetailViewTestCase(APITransactionTestCase):
             username="testuser1",
             email="testuser1@example.com",
             password="testpassword123",
-            nickname="TestUser1",
         )
         self.user2 = User.objects.create_user(
             username="testuser2",
             email="testuser2@example.com",
             password="testpassword123",
-            nickname="TestUser2",
         )
         self.client.force_authenticate(user=self.user1)
 
@@ -55,17 +52,16 @@ class ProfileUpdateViewTestCase(APITransactionTestCase):
             username="testuser",
             email="testuser@example.com",
             password="testpassword123",
-            nickname="TestUser",
         )
         self.client.force_authenticate(user=self.user)
 
     def test_profile_update_view(self):
         """전체 업데이트(put request) 테스트"""
         url = reverse("accounts:profile_update")
-        data = {"nickname": "UpdatedNickname", "bio": "Updated bio"}
+        data = {"username": "UpdatedUsername", "bio": "Updated bio"}
         response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["nickname"], "UpdatedNickname")
+        self.assertEqual(response.data["username"], "UpdatedUsername")
 
     def test_profile_partial_update_view(self):
         """부분 업데이트(patch request) 테스트"""
@@ -86,7 +82,6 @@ class PrivacySettingsViewTestCase(APITransactionTestCase):
             username="testuser",
             email="testuser@example.com",
             password="testpassword123",
-            nickname="TestUser",
         )
         self.client.force_authenticate(user=self.user)
         self.url = reverse("accounts:privacy_settings")
@@ -160,13 +155,11 @@ class FollowViewTestCase(APITransactionTestCase):
             username="testuser1",
             email="testuser1@example.com",
             password="testpassword123",
-            nickname="TestUser1",
         )
         self.user2 = User.objects.create_user(
             username="testuser2",
             email="testuser2@example.com",
             password="testpassword123",
-            nickname="TestUser2",
         )
         self.client.force_authenticate(user=self.user1)
 
@@ -214,13 +207,11 @@ class UnfollowViewTestCase(APITransactionTestCase):
             username="testuser1",
             email="testuser1@example.com",
             password="testpassword123",
-            nickname="TestUser1",
         )
         self.user2 = User.objects.create_user(
             username="testuser2",
             email="testuser2@example.com",
             password="testpassword123",
-            nickname="TestUser2",
         )
         Follow.objects.create(follower=self.user1, following=self.user2)
         self.client.force_authenticate(user=self.user1)
@@ -258,19 +249,16 @@ class ProfileSearchViewTestCase(APITransactionTestCase):
             username="testuser1",
             password="12345",
             email="test1@example.com",
-            nickname="TestUser1",
         )
         self.user2 = User.objects.create_user(
             username="testuser2",
             password="12345",
             email="test2@example.com",
-            nickname="TestUser2",
         )
         self.user3 = User.objects.create_user(
             username="otheruser",
             password="12345",
             email="other@example.com",
-            nickname="OtherUser",
         )
         self.client.force_authenticate(user=self.user1)
 

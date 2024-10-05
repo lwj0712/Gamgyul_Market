@@ -11,6 +11,17 @@ class User(AbstractUser):
     커스텀 유저 모델
     """
 
+    email = models.EmailField("이메일 주소", unique=True)
+    username = models.CharField(
+        "사용자명",
+        max_length=150,
+        unique=True,
+        help_text="필수 항목입니다. 150자 이하로 작성해주세요. 문자, 숫자 그리고 @/./+/-/_만 사용 가능합니다.",
+        validators=[AbstractUser.username_validator],
+        error_messages={
+            "unique": "이미 사용 중인 사용자명입니다.",
+        },
+    )
     profile_image = ProcessedImageField(
         upload_to="profile_images",
         processors=[ResizeToFill(400, 400)],
@@ -26,10 +37,16 @@ class User(AbstractUser):
         options={"quality": 60},
     )
     temperature = models.FloatField(
-        default=36.5, validators=[MinValueValidator(0), MaxValueValidator(100)]
+        default=36.5,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100),
+        ],  # 온도, 사용자 평가 기능
     )
-    nickname = models.CharField(max_length=50, unique=True)
     bio = models.TextField(max_length=500, blank=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
         return self.username

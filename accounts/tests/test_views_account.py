@@ -20,7 +20,6 @@ class BaseTestCase(APITestCase):
             username="testuser",
             email="test@example.com",
             password="testpassword123",
-            nickname="TestUser",
         )
 
 
@@ -37,7 +36,6 @@ class SignUpLoginTestCase(BaseTestCase):
             "username": "newuser",
             "email": "newuser@example.com",
             "password": "newpassword123",
-            "nickname": "NewUser",
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -50,19 +48,6 @@ class SignUpLoginTestCase(BaseTestCase):
             "username": "testuser",
             "email": "newuser@example.com",
             "password": "newpassword123",
-            "nickname": "NewUser",
-        }
-        response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_signup_view_duplicate_nickname(self):
-        """nickname 중복 에러 테스트"""
-        url = reverse("accounts:signup")
-        data = {
-            "username": "newuser",
-            "email": "newuser@example.com",
-            "password": "newpassword123",
-            "nickname": "TestUser",
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -74,7 +59,6 @@ class SignUpLoginTestCase(BaseTestCase):
             "username": "newuser",
             "email": "test@example.com",
             "password": "newpassword123",
-            "nickname": "NewUser",
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -82,7 +66,7 @@ class SignUpLoginTestCase(BaseTestCase):
     def test_login_view(self):
         """로그인 테스트"""
         url = reverse("accounts:login")
-        data = {"username": "testuser", "password": "testpassword123"}
+        data = {"email": "test@example.com", "password": "testpassword123"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("detail", response.data)
@@ -90,7 +74,7 @@ class SignUpLoginTestCase(BaseTestCase):
     def test_login_view_invalid_credentials(self):
         """비밀번호 잘못 입력 시 에러 테스트"""
         url = reverse("accounts:login")
-        data = {"username": "testuser", "password": "wrongpassword"}
+        data = {"email": "test@example.com", "password": "wrongpassword"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -109,7 +93,7 @@ class InactiveUserTestCase(BaseTestCase):
     def test_login_view_inactive_account(self):
         """비활성화된 계정 로그인 시 에러 테스트"""
         url = reverse("accounts:login")
-        data = {"username": "testuser", "password": "testpassword123"}
+        data = {"email": "test@example.com", "password": "testpassword123"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertIn("detail", response.data)
@@ -149,7 +133,7 @@ class AuthenticatedUserTestCase(BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.client.login(username="testuser", password="testpassword123")
+        self.client.login(email="test@example.com", password="testpassword123")
 
     def test_logout_view(self):
         """로그아웃 테스트"""
@@ -162,7 +146,7 @@ class AuthenticatedUserTestCase(BaseTestCase):
         url = reverse("accounts:user_deactivate")
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(User.objects.get(username="testuser").is_active)
+        self.assertFalse(User.objects.get(email="test@example.com").is_active)
 
     def test_user_delete_view(self):
         """로그인된 사용자 계정 삭제 테스트"""
@@ -170,7 +154,7 @@ class AuthenticatedUserTestCase(BaseTestCase):
         data = {"confirmation": "DELETE"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(User.objects.filter(username="testuser").exists())
+        self.assertFalse(User.objects.filter(email="test@example.com").exists())
 
 
 class PasswordChangeTestCase(BaseTestCase):
@@ -181,7 +165,7 @@ class PasswordChangeTestCase(BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.client.login(username="testuser", password="testpassword123")
+        self.client.login(email="test@example.com", password="testpassword123")
         self.url = reverse("accounts:change_password")
 
     def test_successful_password_change(self):
@@ -195,7 +179,7 @@ class PasswordChangeTestCase(BaseTestCase):
         )
         self.client.logout()
         self.assertTrue(
-            self.client.login(username="testuser", password="newpassword123")
+            self.client.login(email="test@example.com", password="newpassword123")
         )
 
     def test_wrong_old_password(self):

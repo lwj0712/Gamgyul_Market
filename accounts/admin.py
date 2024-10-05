@@ -14,26 +14,46 @@ class PrivacySettingsInline(admin.StackedInline):
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ("username", "email", "nickname", "temperature")
-    fieldsets = UserAdmin.fieldsets + (
+    list_display = ("email", "username", "temperature")
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
         (
-            "Custom fields",
+            "Personal info",
+            {"fields": ("username", "profile_image", "temperature", "bio")},
+        ),
+        (
+            "Permissions",
             {
                 "fields": (
-                    "profile_image",
-                    "temperature",
-                    "nickname",
-                    "bio",
-                    "latitude",
-                    "longitude",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
                 )
             },
         ),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "username",
+                    "password1",
+                    "password2",
+                    "is_staff",
+                    "is_active",
+                ),
+            },
+        ),
+    )
+    search_fields = ("email", "username")
+    ordering = ("email",)
     inlines = (PrivacySettingsInline,)
-
-
-admin.site.register(User, CustomUserAdmin)
 
 
 @admin.register(SocialAccount)
