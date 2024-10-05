@@ -66,18 +66,24 @@ class ChatRoomTestCase(APITestCase):
         테스트용 사용자 생성 및 로그인 처리
         """
         self.user1 = User.objects.create_user(
-            username="user1", password="password123", nickname="user1_nickname"
+            email="newuser1@example.com",
+            password="newpassword123",
+            username="user1",
         )
         self.user2 = User.objects.create_user(
-            username="user2", password="password123", nickname="user2_nickname"
+            email="newuser2@example.com",
+            password="newpassword123",
+            username="user2",
         )
         self.user3 = User.objects.create_user(
-            username="user3", password="password123", nickname="user3_nickname"
+            email="newuser3@example.com",
+            password="newpassword123",
+            username="user3",
         )
 
         # 로그인 설정
         self.client = APIClient()
-        self.client.login(username="user1", password="password123")
+        self.client.login(email="newuser1@example.com", password="newpassword123")
 
     def test_chatroom_creation(self):
         """
@@ -138,7 +144,7 @@ class ChatRoomTestCase(APITestCase):
         message = Message.objects.create(
             chat_room=chatroom, sender=self.user1, content="Hello!"
         )
-        self.client.login(username="user2", password="password123")
+        self.client.login(email="newuser2@example.com", password="newpassword123")
         url = reverse("chat:room_detail", kwargs={"room_id": chatroom.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -197,10 +203,14 @@ class ChatRoomWebSocketTestCase(TransactionTestCase):
         테스트용 사용자 및 채팅방 생성
         """
         self.user1 = User.objects.create_user(
-            username="user1", password="password123", nickname=f"user1_{uuid.uuid4()}"
+            username=f"user1_{uuid.uuid4()}",
+            email="newuser1@example.com",
+            password="newpassword123",
         )
         self.user2 = User.objects.create_user(
-            username="user2", password="password123", nickname=f"user2_{uuid.uuid4()}"
+            username=f"user2_{uuid.uuid4()}",
+            email="newuser2@example.com",
+            password="newpassword123",
         )
 
         # 채팅방 생성 및 참가자 설정
