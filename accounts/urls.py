@@ -1,7 +1,7 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import account, profile
+from .views import account, profile, recommendation
 
 app_name = "accounts"
 
@@ -42,6 +42,12 @@ urlpatterns = [
     path("unfollow/<int:pk>/", profile.UnfollowView.as_view(), name="unfollow"),
     # 프로필 검색
     path("search/", profile.ProfileSearchView.as_view(), name="profile_search"),
+    # 친구 추천
+    path(
+        "recommend/",
+        recommendation.FriendRecommendationView.as_view(),
+        name="friend_recommendation",
+    ),
 ]
 
 if settings.DEBUG:

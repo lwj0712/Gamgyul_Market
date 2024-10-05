@@ -57,18 +57,18 @@ class AlarmTestCase(TransactionTestCase):
         테스트용 사용자 및 게시글 생성
         """
         self.user1 = User.objects.create_user(
-            username="user1",
-            password="password123",
-            nickname="user1_nickname",
+            username="testuser1",
+            email="newuser1@example.com",
+            password="newpassword123",
         )
         self.user2 = User.objects.create_user(
-            username="user2",
-            password="password123",
-            nickname="user2_nickname",
+            username="testuser2",
+            email="newuser2@example.com",
+            password="newpassword456",
         )
 
         self.client = APIClient()
-        self.client.login(username=self.user1.username, password="password123")
+        self.client.login(email=self.user1.email, password="newpassword123")
 
         # Post 객체 생성
         self.post = Post.objects.create(

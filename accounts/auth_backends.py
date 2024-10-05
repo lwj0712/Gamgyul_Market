@@ -8,10 +8,10 @@ class CustomAuthBackend(ModelBackend):
     is_active = False여도 check_password 하고 user 인식
     """
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, email=None, password=None, **kwargs):
         UserModel = get_user_model()
         try:
-            user = UserModel.objects.get(username=username)
+            user = UserModel.objects.get(email=email)
         except UserModel.DoesNotExist:
             return None
 
