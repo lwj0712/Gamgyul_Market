@@ -4,23 +4,17 @@ from .models import User, SocialAccount, Follow, PrivacySettings
 
 
 class PrivacySettingsInline(admin.StackedInline):
-    """
-    프로필 정보 administration
-    """
-
     model = PrivacySettings
     can_delete = False
-    verbose_name_plural = "Privacy Setting"
+    verbose_name_plural = "Privacy Settings"
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ("email", "username", "temperature")
+    list_display = ("username", "email", "temperature", "is_staff")
+    list_filter = ("is_staff", "is_superuser", "is_active", "groups")
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        (
-            "Personal info",
-            {"fields": ("username", "profile_image", "temperature", "bio")},
-        ),
+        (None, {"fields": ("username", "password")}),
+        ("Personal info", {"fields": ("email", "profile_image", "bio", "temperature")}),
         (
             "Permissions",
             {
@@ -40,26 +34,19 @@ class CustomUserAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": (
-                    "email",
-                    "username",
-                    "password1",
-                    "password2",
-                    "is_staff",
-                    "is_active",
-                ),
+                "fields": ("username", "email", "password1", "password2"),
             },
         ),
     )
-    search_fields = ("email", "username")
-    ordering = ("email",)
+    search_fields = ("username", "email")
+    ordering = ("username",)
     inlines = (PrivacySettingsInline,)
 
 
 @admin.register(SocialAccount)
 class SocialAccountAdmin(admin.ModelAdmin):
     list_display = ("user", "provider", "uid")
-    search_fields = ("user__username", "provider")
+    search_fields = ("user__username", "user__email", "provider")
 
 
 @admin.register(Follow)
@@ -68,17 +55,4 @@ class FollowAdmin(admin.ModelAdmin):
     search_fields = ("follower__username", "following__username")
 
 
-@admin.register(PrivacySettings)
-class PrivacySettingsAdmin(admin.ModelAdmin):
-    list_display = (
-        "user",
-        "follower_can_see_email",
-        "following_can_see_email",
-        "others_can_see_email",
-    )
-    list_filter = (
-        "follower_can_see_email",
-        "following_can_see_email",
-        "others_can_see_email",
-    )
-    search_fields = ("user__username", "user__email")
+admin.site.register(User, CustomUserAdmin)
