@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -61,3 +62,26 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender.username}님의 메시지"
+
+
+class WebSocketConnection(models.Model):
+    """
+    WebSocket 연결 정보를 저장하는 모델
+    """
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ws_connections"
+    )
+    chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
+    connected_at = models.DateTimeField(auto_now_add=True)
+    disconnected_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} in {self.chat_room} - connected at {self.connected_at}"
+
+    def mark_disconnected(self):
+        """
+        WebSocket 연결 종료 시간을 기록
+        """
+        self.disconnected_at = timezone.now()
+        self.save()
