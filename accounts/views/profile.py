@@ -56,7 +56,6 @@ class ProfileDetailView(generics.RetrieveAPIView):
                 value={
                     "id": 1,
                     "username": "example_user",
-                    "nickname": "Example User",
                     "bio": "This is a bio",
                     "profile_image": "http://example.com/profile.jpg",
                     "temperature": 36.5,
@@ -89,9 +88,8 @@ class ProfileUpdateView(generics.UpdateAPIView):
             OpenApiExample(
                 "프로필 업데이트 예시",
                 value={
-                    "nickname": "새로운닉네임",
                     "bio": "새로운 자기소개",
-                    "email": "new.email@example.com",
+                    "username": "newuser",
                 },
                 request_only=True,
             )
@@ -111,7 +109,7 @@ class ProfileUpdateView(generics.UpdateAPIView):
             OpenApiExample(
                 "프로필 부분 업데이트 예제",
                 value={
-                    "nickname": "새로운닉네임",
+                    "bio": "새로운 자기소개",
                 },
                 request_only=True,
             )
@@ -267,14 +265,13 @@ class FollowView(generics.CreateAPIView):
                 value={
                     "id": 2,
                     "username": "user2",
-                    "nickname": "User Two",
                     "bio": "Hello, I'm User Two",
                     "profile_image": "http://example.com/media/profile_images/user2.jpg",
                     "temperature": 36.5,
                     "followers": [
                         {
                             "id": "1",
-                            "nickname": "User One",
+                            "username": "user1",
                             "profile_image": "http://example.com/media/profile_images/user1.jpg",
                         }
                     ],
@@ -421,11 +418,11 @@ class ProfileSearchView(generics.ListAPIView):
 
     @extend_schema(
         summary="프로필 검색",
-        description="사용자 이름, 닉네임 또는 이메일을 기반으로 프로필을 검색합니다.",
+        description="사용자 이름, 이메일을 기반으로 프로필을 검색합니다.",
         parameters=[
             OpenApiParameter(
                 name="q",
-                description="검색 쿼리 (사용자 이름, 닉네임 또는 이메일)",
+                description="검색 쿼리 (사용자 이름, 이메일)",
                 required=False,
                 type=str,
             ),
@@ -438,13 +435,11 @@ class ProfileSearchView(generics.ListAPIView):
                     {
                         "id": 1,
                         "username": "john_doe",
-                        "nickname": "John",
                         "profile_image": "http://example.com/media/profile_images/john.jpg",
                     },
                     {
                         "id": 2,
                         "username": "jane_doe",
-                        "nickname": "Jane",
                         "profile_image": "http://example.com/media/profile_images/jane.jpg",
                     },
                 ],
@@ -458,13 +453,11 @@ class ProfileSearchView(generics.ListAPIView):
 
     def get_queryset(self):
         """
-        유저 이름, 닉네임, 이메일로 프로필 검색
+        유저 이름, 이메일로 프로필 검색
         """
         query = self.request.query_params.get("q", "")
         if query:
             return User.objects.filter(
-                Q(username__icontains=query)
-                | Q(nickname__icontains=query)
-                | Q(email__icontains=query)
+                Q(username__icontains=query) | Q(email__icontains=query)
             ).distinct()
         return User.objects.none()
