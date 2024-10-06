@@ -41,12 +41,11 @@ class SignUpView(generics.CreateAPIView):
             OpenApiExample(
                 "회원가입 예시",
                 summary="기본 회원가입",
-                description="사용자 이름, 이메일, 비밀번호, 닉네임을 사용한 기본 회원가입 예시",
+                description="사용자 이름, 이메일, 비밀번호를 사용한 기본 회원가입 예시",
                 value={
                     "username": "newuser",
                     "email": "newuser@example.com",
                     "password": "securepassword123",
-                    "nickname": "New User",
                     "bio": "안녕하세요, 새로운 사용자입니다.",
                 },
                 request_only=True,
@@ -103,9 +102,9 @@ class LoginView(APIView):
         """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            username = serializer.validated_data["username"]
+            email = serializer.validated_data["email"]
             password = serializer.validated_data["password"]
-            user = authenticate(username=username, password=password)
+            user = authenticate(request, email=email, password=password)
             if user is not None:
                 if user.is_active:
                     login(request, user)
@@ -417,7 +416,7 @@ class ActivateAccountView(APIView):
             user.save()
             backend = CustomAuthBackend()
             authenticated_user = backend.authenticate(
-                request, username=user.username, password=None, activate=True
+                request, email=user.email, password=None, activate=True
             )
 
             if authenticated_user:
