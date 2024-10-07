@@ -1,15 +1,15 @@
 import json
-from channels.testing import WebsocketCommunicator
 from django.urls import reverse, re_path
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from django.test import Client, TransactionTestCase
-from channels.routing import URLRouter
-from asgiref.sync import async_to_sync, sync_to_async
+from django.test import TransactionTestCase
+from asgiref.sync import sync_to_async
 from channels.auth import AuthMiddlewareStack
+from channels.routing import URLRouter
+from channels.testing import WebsocketCommunicator
 from alarm.models import Alarm
-from chat.models import ChatRoom, Message
+from chat.models import ChatRoom, Message, WebSocketConnection
 from accounts.models import Follow
 from insta.models import Post, Comment, Like
 from .consumers import AlarmConsumer
@@ -220,6 +220,80 @@ class AlarmTestCase(TransactionTestCase):
         self.assertEqual(response["alarm"], alarm.message)
 
         await communicator.disconnect()
+
+    async def test_message_alarm_based_on_websocket_disconnect(self):
+        """
+        WebSocket 연결 종료 시간을 기준으로 메시지 알림이 생성되는지 테스트
+        """
+        print(">>> WebSocket 연결 종료 시간에 따른 알림 생성 테스트 시작")
+
+        # user1이 WebSocket 연결한 후 즉시 연결 종료
+        ws_connection = await sync_to_async(WebSocketConnection.objects.create)(
+            user=self.user1, chat_room=self.chat_room
+        )
+        await sync_to_async(ws_connection.mark_disconnected)()
+
+        # user2가 메시지 전송
+        await sync_to_async(Message.objects.create)(
+            chat_room=self.chat_room, sender=self.user2, content="안녕하세요"
+        )
+
+        # 연결 종료 시간 이후에 메시지가 전송되었기 때문에 알림이 생성되어야 함
+        alarm = await sync_to_async(
+            Alarm.objects.filter(recipient=self.user1, alarm_type="message").first
+        )()
+        self.assertIsNotNone(alarm, "메시지 알림이 생성되지 않았습니다.")
+
+        # WebSocket 전송 확인
+        websocket_url = f"/ws/alarm/"
+        communicator = WebsocketCommunicator(test_application, websocket_url)
+
+        connected, _ = await communicator.connect()
+        self.assertTrue(
+            connected, f"WebSocket 연결에 실패했습니다. 경로: {websocket_url}"
+        )
+
+        # WebSocket 메시지 전송 및 알람 수신 확인
+        await communicator.send_json_to({"alarm": alarm.message})
+        response = await communicator.receive_json_from()
+        print(f"WebSocket 수신 알림: {response}")
+
+        self.assertIn("alarm", response, "메시지 알림 메시지가 수신되지 않았습니다.")
+        self.assertEqual(response["alarm"], alarm.message)
+
+        await communicator.disconnect()
+
+    async def test_message_no_alarm_if_user_connected(self):
+        """
+        WebSocket 연결이 유지된 경우 알림이 생성되지 않는지 테스트
+        """
+        print(">>> WebSocket 연결 유지 시 알림 미생성 테스트 시작")
+
+        # user1이 WebSocket 연결을 유지 중
+        await sync_to_async(WebSocketConnection.objects.create)(
+            user=self.user1, chat_room=self.chat_room, disconnected_at=None
+        )
+
+        # WebSocketConnection이 제대로 생성되었는지 확인
+        websocket_connection = await sync_to_async(
+            WebSocketConnection.objects.filter(
+                user=self.user1, chat_room=self.chat_room, disconnected_at=None
+            ).exists
+        )()
+        self.assertTrue(
+            websocket_connection, "WebSocket 연결이 정상적으로 생성되지 않았습니다."
+        )
+
+        # user2가 메시지 전송
+        await sync_to_async(Message.objects.create)(
+            chat_room=self.chat_room, sender=self.user2, content="안녕하세요"
+        )
+
+        # user1이 여전히 WebSocket에 연결되어 있으므로 알림이 생성되지 않아야 함
+        alarm_exists = await sync_to_async(
+            Alarm.objects.filter(recipient=self.user1, alarm_type="message").exists
+        )()
+        self.assertFalse(alarm_exists, "WebSocket 연결 중에도 알림이 생성되었습니다.")
 
     def test_delete_alarm(self):
         """
