@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample
 from .models import Report
 from .serializers import ReportCreateSerializer
@@ -22,7 +23,7 @@ class ReportCreateView(generics.CreateAPIView):
                 summary="게시글 신고 예시",
                 description="스팸으로 의심되는 게시글 신고",
                 value={
-                    "content_type": "post",
+                    "content_type": "insta.post",
                     "object_id": 1,
                     "reason": "spam",
                     "description": "이 게시글은 광고성 스팸으로 의심됩니다.",
@@ -33,7 +34,13 @@ class ReportCreateView(generics.CreateAPIView):
         tags=["reports"],
     )
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
+        serializer.save()

@@ -1,14 +1,10 @@
 from rest_framework import serializers
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.apps import apps
 from .models import Report
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
-    """
-    신고할 객체를 신고할 때, content_type, object_id, reason, description 필드를 전달
-    """
-
     content_type = serializers.CharField()
     object_id = serializers.IntegerField()
 
@@ -21,11 +17,18 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         object_id = data.get("object_id")
 
         try:
-            model_class = ContentType.objects.get(model=content_type).model_class()
-            model_class.objects.get(id=object_id)
-        except ContentType.DoesNotExist:
+            app_label, model = content_type.split(".")
+            model_class = apps.get_model(app_label, model)
+            obj = model_class.objects.get(id=object_id)
+        except (ValueError, LookupError):
             raise serializers.ValidationError("Invalid content type")
-        except ObjectDoesNotExist:
+        except model_class.DoesNotExist:
             raise serializers.ValidationError("Object does not exist")
 
+        # ContentType 객체를 가져와서 데이터에 저장
+        data["content_type"] = ContentType.objects.get_for_model(model_class)
         return data
+
+    def create(self, validated_data):
+        reporter = self.context["request"].user
+        return Report.objects.create(reporter=reporter, **validated_data)
