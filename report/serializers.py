@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Report
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Report
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
@@ -15,15 +16,16 @@ class ReportCreateSerializer(serializers.ModelSerializer):
         model = Report
         fields = ["content_type", "object_id", "reason", "description"]
 
-    def validate_content_type(self, value):
-        """
-        content_type 필드 유효성 검사
-        """
+    def validate(self, data):
+        content_type = data.get("content_type")
+        object_id = data.get("object_id")
+
         try:
-            return ContentType.objects.get(model=value)
+            model_class = ContentType.objects.get(model=content_type).model_class()
+            model_class.objects.get(id=object_id)
         except ContentType.DoesNotExist:
             raise serializers.ValidationError("Invalid content type")
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError("Object does not exist")
 
-    def create(self, validated_data):
-        validated_data["reporter"] = self.context["request"].user
-        return super().create(validated_data)
+        return data
