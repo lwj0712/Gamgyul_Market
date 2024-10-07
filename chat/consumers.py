@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
-from .models import ChatRoom, Message
+from .models import ChatRoom, Message, WebSocketConnection
 
 User = get_user_model()
 
@@ -30,6 +30,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if await self.is_user_in_room(self.room_id, self.scope["user"]):
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
+
+            # WebSocket 연결 정보를 저장
+            await self.record_connection(self.scope["user"], self.room_id)
         else:
             await self.close()
 
@@ -37,8 +40,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         클라이언트가 WebSocket 연결을 끊을 때 호출
         - 그룹에서 사용자 제거
+        - WebSocketConnection 모델을 사용해 연결 종료 시간 기록
         """
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        # WebSocket 연결 종료 시간 기록
+        await self.mark_connection_as_disconnected(self.scope["user"], self.room_id)
 
     async def receive(self, text_data):
         """
@@ -116,6 +122,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return chat_room.participants.filter(id=user.id).exists()
         except ChatRoom.DoesNotExist:
             return False
+
+    @database_sync_to_async
+    def record_connection(self, user, room_id):
+        """
+        WebSocket 연결 정보를 기록
+        """
+        chat_room = ChatRoom.objects.get(id=room_id)
+        WebSocketConnection.objects.create(user=user, chat_room=chat_room)
+
+    @database_sync_to_async
+    def mark_connection_as_disconnected(self, user, room_id):
+        """
+        WebSocket 연결 종료 시간을 기록
+        """
+        chat_room = ChatRoom.objects.get(id=room_id)
+        connection = (
+            WebSocketConnection.objects.filter(user=user, chat_room=chat_room)
+            .order_by("-connected_at")
+            .first()
+        )
+        if connection:
+            connection.mark_disconnected()
 
     @database_sync_to_async
     def mark_message_as_read(self, message_id):
