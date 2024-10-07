@@ -2,9 +2,10 @@ import uuid
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 from django.db import models
-from django.conf import settings
 from django.db.models import Avg
-from django.utils.text import slugify
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class Product(models.Model):
@@ -12,9 +13,7 @@ class Product(models.Model):
     상품 모델
     """
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
@@ -65,9 +64,7 @@ class Review(models.Model):
     상품 리뷰 모델
     """
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     product = models.ForeignKey(
         Product, related_name="reviews", on_delete=models.CASCADE
     )
