@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "market",
     "chat",
     "alarm",
+    "report",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
