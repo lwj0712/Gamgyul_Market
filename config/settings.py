@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "market",
     "chat",
     "alarm",
+    "report",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -123,14 +124,6 @@ CHANNEL_LAYERS = {
             "hosts": [("127.0.0.1", 6379)],
         },
     },
-}
-
-# drf-yasg 설정
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Basic": {"type": "basic"},
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
-    }
 }
 
 AUTH_USER_MODEL = "accounts.User"

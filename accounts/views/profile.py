@@ -58,7 +58,6 @@ class ProfileDetailView(generics.RetrieveAPIView):
                     "username": "example_user",
                     "bio": "This is a bio",
                     "profile_image": "http://example.com/profile.jpg",
-                    "temperature": 36.5,
                     "followers_count": 10,
                     "following_count": 20,
                 },
@@ -267,7 +266,6 @@ class FollowView(generics.CreateAPIView):
                     "username": "user2",
                     "bio": "Hello, I'm User Two",
                     "profile_image": "http://example.com/media/profile_images/user2.jpg",
-                    "temperature": 36.5,
                     "followers": [
                         {
                             "id": "1",

@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.conf import settings
 from imagekit.models import ProcessedImageField, ImageSpecField
 from imagekit.processors import ResizeToFill, Thumbnail
 
@@ -35,13 +33,6 @@ class User(AbstractUser):
         processors=[Thumbnail(100, 100)],
         format="JPEG",
         options={"quality": 60},
-    )
-    temperature = models.FloatField(
-        default=36.5,
-        validators=[
-            MinValueValidator(0),
-            MaxValueValidator(100),
-        ],  # 온도, 사용자 평가 기능
     )
     bio = models.TextField(max_length=500, blank=True)
 
@@ -77,10 +68,10 @@ class Follow(models.Model):
     """
 
     follower = models.ForeignKey(
-        User, related_name="following", on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, related_name="following"
     )
     following = models.ForeignKey(
-        User, related_name="followers", on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, related_name="followers"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -97,9 +88,7 @@ class PrivacySettings(models.Model):
     """
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="privacy_settings",
+        User, on_delete=models.CASCADE, related_name="privacy_settings"
     )
 
     # 팔로워에게 공개될 정보
