@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Post, PostImage, Comment, Like
 from taggit.serializers import TagListSerializerField, TaggitSerializer
+from .models import Post, PostImage, Comment, Like
 from accounts.serializers import UserSerializer
 
 
@@ -9,7 +9,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostImage
-        fields = ["id", "image"]
+        fields = ["id", "image_1080"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -27,12 +27,14 @@ class CommentSerializer(serializers.ModelSerializer):
             "parent_comment",
             "content",
             "created_at",
+            "replies",
         ]
         read_only_fields = ["user", "post"]
 
     def get_replies(self, obj):
+        """대댓글 리스트 반환"""
         if obj.parent_comment is None:  # 최상위 댓글인 경우에만 대댓글을 가져옴
-            replies = Comment.objects.filter(parent_comment=obj)
+            replies = Comment.objects.filter(parent_comment=obj).order_by("-created_at")
             return CommentSerializer(replies, many=True).data
         return []
 
@@ -48,7 +50,7 @@ class LikeSerializer(serializers.ModelSerializer):
         read_only_fields = ["user", "post"]
 
 
-class PostSerializer(serializers.ModelSerializer):
+class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     """게시물 모델의 serlializer"""
 
     user = UserSerializer(read_only=True)
@@ -58,7 +60,7 @@ class PostSerializer(serializers.ModelSerializer):
     images = PostImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(
-            max_length=1000000, allow_empty_file=False, use_url=False
+            max_length=255, allow_empty_file=False, use_url=False
         ),
         write_only=True,
         required=False,
@@ -68,59 +70,77 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             "id",
+            "user",
             "content",
             "location",
             "created_at",
             "updated_at",
             "tags",
             "images",
+            "uploaded_images",
+            "likes_count",
+            "comments",
         ]
-        read_only_fields = ["user", "created_at", "updated_at"]
+        read_only_fields = [
+            "user",
+            "created_at",
+            "updated_at",
+            "likes_count",
+            "comments",
+        ]
+
+    def get_likes_count(self, obj):
+        """좋아요 수를 반환"""
+        return obj.likes.count()
 
     def create(self, validated_data):
-        """Post 객체 생성 시 커스텀 동작 정의"""
+        """게시물 생성 로직"""
         tags_data = validated_data.pop("tags", None)
-        images_data = validated_data.pop("images", None)
+        uploaded_images = validated_data.pop("uploaded_images", [])
 
         request = self.context.get("request")
         validated_data["user"] = request.user
 
-        if not images_data or len(images_data) == 0:
+        if not uploaded_images:
             raise serializers.ValidationError("이미지는 필수입니다.")
-
-        if len(images_data) > 10:
+        if len(uploaded_images) > 10:
             raise serializers.ValidationError("이미지는 10개까지 첨부할 수 있습니다.")
 
         post = Post.objects.create(**validated_data)
 
-        for image_data in images_data:
-            PostImage.objects.create(post=post, **image_data)
+        """이미지 저장"""
+        for image_data in uploaded_images:
+            PostImage.objects.create(post=post, image=image_data)
 
+        """태그 추가"""
         if tags_data:
             post.tags.add(*tags_data)
 
         return post
 
     def update(self, instance, validated_data):
-        """Post 객체 수정 시 커스텀 동작 정의"""
+        """게시물 수정 로직"""
         tags_data = validated_data.pop("tags", None)
-        images_data = validated_data.pop("images", [])
+        uploaded_images = validated_data.pop("uploaded_images", [])
 
         instance.content = validated_data.get("content", instance.content)
         instance.location = validated_data.get("location", instance.location)
         instance.save()
 
+        """태그 수정"""
         if tags_data is not None:
             instance.tags.set(tags_data)
 
-        if images_data:
-            if len(images_data) + instance.images.count() > 10:
+        """이미지 수정"""
+        if uploaded_images:
+            current_image_count = instance.images.count()
+            if len(uploaded_images) + current_image_count > 10:
                 raise serializers.ValidationError(
                     "이미지는 10개까지 첨부할 수 있습니다."
                 )
 
-            for image_data in images_data:
-                PostImage.objects.create(post=instance, **image_data)
+            for image_data in uploaded_images:
+                PostImage.objects.create(post=instance, image=image_data)
 
         return instance
 
