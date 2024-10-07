@@ -43,7 +43,6 @@ class UserSerializer(serializers.ModelSerializer):
             "profile_image",
             "profile_image_thumbnail",
             "social_accounts",
-            "temperature",
         )
         extra_kwargs = {
             "password": {"write_only": True},
@@ -52,7 +51,6 @@ class UserSerializer(serializers.ModelSerializer):
             "bio": {"required": False},
             "profile_image": {"required": False},
             "profile_image_thumbnail": {"required": False},
-            "temperature": {"read_only": True},
         }
 
     def validate_email(self, value):
@@ -180,7 +178,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "email",
             "bio",
             "profile_image",
-            "temperature",
             "followers",
             "following",
             "followers_count",
@@ -255,7 +252,6 @@ class ProfileSerializer(serializers.ModelSerializer):
                 "id",
                 "username",
                 "profile_image",
-                "temperature",
             ]
             data = {k: v for k, v in data.items() if k in always_visible or k in data}
 
