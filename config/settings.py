@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "imagekit",
     "crispy_forms",
     "taggit",
+    "taggit_serializer",
     "storages",
     # my apps
     "accounts",

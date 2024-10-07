@@ -4,28 +4,38 @@ from taggit.managers import TaggableManager
 
 
 class Post(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False
-    )
+    """게시물 모델"""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
     location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     tags = TaggableManager(blank=True)
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
 
 
 class PostImage(models.Model):
+    """게시물 이미지 모델"""
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="media/insta/")
+    image = models.ImageField(upload_to="insta/")
+
+    class Meta:
+        ordering = ["post"]
 
     def __str__(self):
         return f"Image for {self.post.user.username}"
 
 
 class Comment(models.Model):
+    """댓글 모델"""
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
@@ -36,11 +46,16 @@ class Comment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["created_at"]
+
     def __str__(self):
         return f"{self.user.username}'s comment on {self.post}"
 
 
 class Like(models.Model):
+    """좋아요 모델"""
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="likes"
@@ -49,6 +64,7 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ("user", "post")
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.user.username} likes {self.post}"
