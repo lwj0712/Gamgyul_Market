@@ -25,11 +25,9 @@ class Alarm(models.Model):
     sender = models.ForeignKey(
         User, related_name="sent_alarms", on_delete=models.CASCADE
     )  # 알림을 발생시킨 사용자
-    alarm_type = models.CharField(
-        max_length=20, choices=ALARM_TYPE_CHOICES
-    )  # 알림 종류
-    message = models.TextField(blank=True, null=True)  # 알림 메시지
-    created_at = models.DateTimeField(auto_now_add=True)  # 알림 생성 시각
+    alarm_type = models.CharField(max_length=20, choices=ALARM_TYPE_CHOICES)
+    message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     related_object_id = models.UUIDField(
         null=True, blank=True
     )  # 연관된 객체의 ID, 리디렉션 용
