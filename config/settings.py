@@ -126,14 +126,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-# drf-yasg 설정
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Basic": {"type": "basic"},
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
-    }
-}
-
 AUTH_USER_MODEL = "accounts.User"
 
 LANGUAGE_CODE = "ko-kr"
