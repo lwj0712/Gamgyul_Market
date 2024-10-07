@@ -10,11 +10,11 @@ class PrivacySettingsInline(admin.StackedInline):
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ("username", "email", "temperature", "is_staff")
+    list_display = ("username", "email", "is_staff")
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        ("Personal info", {"fields": ("email", "profile_image", "bio", "temperature")}),
+        ("Personal info", {"fields": ("email", "profile_image", "bio")}),
         (
             "Permissions",
             {
