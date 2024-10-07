@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.urls import path
 from . import views
 
@@ -16,8 +14,8 @@ urlpatterns = [
     ),
     path(
         "posts/<int:post_id>/comments/",
-        views.CommentListView.as_view(),
-        name="insta_comment_list",
+        views.CommentListCreateView.as_view(),
+        name="insta_comment_list_create",
     ),
     path(
         "comments/<int:pk>/",
@@ -25,4 +23,5 @@ urlpatterns = [
         name="insta_comment_detail",
     ),
     path("posts/<int:post_id>/like/", views.LikeView.as_view(), name="insta_like"),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path("posts/search/", views.TagPostListView.as_view(), name="insta_tag_post_list"),
+]
