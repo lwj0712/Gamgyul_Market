@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from .models import ChatRoom, Message
+from .models import ChatRoom, Message, WebSocketConnection
 from .serializers import ChatRoomSerializer, MessageSerializer
 
 User = get_user_model()
@@ -133,10 +133,15 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     def mark_all_messages_as_read(self, chat_room):
         """
         메시지의 읽음 상태를 한번에 업데이트
+        WebSocket이 연결된 경우는 제외하고 처리
         """
-        Message.objects.filter(chat_room=chat_room, is_read=False).exclude(
-            sender=self.request.user
-        ).update(is_read=True)
+        other_user = chat_room.participants.exclude(id=self.request.user.id).first()
+        if not WebSocketConnection.objects.filter(
+            user=other_user, chat_room=chat_room, disconnected_at__isnull=True
+        ).exists():
+            Message.objects.filter(chat_room=chat_room, is_read=False).exclude(
+                sender=self.request.user
+            ).update(is_read=True)
 
 
 class ChatRoomLeaveView(generics.DestroyAPIView):
@@ -228,7 +233,15 @@ class MessageCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         chat_room = get_chat_room_or_404(self.request, self.kwargs["room_id"])
-        serializer.save(sender=self.request.user, chat_room=chat_room)
+        message = serializer.save(sender=self.request.user, chat_room=chat_room)
+
+        # 상대방이 WebSocket에 연결된 상태라면 즉시 읽음 처리
+        other_user = chat_room.participants.exclude(id=self.request.user.id).first()
+        if WebSocketConnection.objects.filter(
+            user=other_user, chat_room=chat_room, disconnected_at__isnull=True
+        ).exists():
+            message.is_read = True
+            message.save()
 
 
 class MessageSearchView(generics.ListAPIView):
