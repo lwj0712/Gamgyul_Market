@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.conf import settings
 from imagekit.models import ProcessedImageField, ImageSpecField
 from imagekit.processors import ResizeToFill, Thumbnail
 
@@ -11,6 +9,17 @@ class User(AbstractUser):
     커스텀 유저 모델
     """
 
+    email = models.EmailField("이메일 주소", unique=True)
+    username = models.CharField(
+        "사용자명",
+        max_length=150,
+        unique=True,
+        help_text="필수 항목입니다. 150자 이하로 작성해주세요. 문자, 숫자 그리고 @/./+/-/_만 사용 가능합니다.",
+        validators=[AbstractUser.username_validator],
+        error_messages={
+            "unique": "이미 사용 중인 사용자명입니다.",
+        },
+    )
     profile_image = ProcessedImageField(
         upload_to="profile_images",
         processors=[ResizeToFill(400, 400)],
@@ -25,13 +34,10 @@ class User(AbstractUser):
         format="JPEG",
         options={"quality": 60},
     )
-    temperature = models.FloatField(
-        default=36.5, validators=[MinValueValidator(0), MaxValueValidator(100)]
-    )
-    nickname = models.CharField(max_length=50, unique=True)
     bio = models.TextField(max_length=500, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
         return self.username
@@ -62,10 +68,10 @@ class Follow(models.Model):
     """
 
     follower = models.ForeignKey(
-        User, related_name="following", on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, related_name="following"
     )
     following = models.ForeignKey(
-        User, related_name="followers", on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, related_name="followers"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -82,9 +88,7 @@ class PrivacySettings(models.Model):
     """
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="privacy_settings",
+        User, on_delete=models.CASCADE, related_name="privacy_settings"
     )
 
     # 팔로워에게 공개될 정보

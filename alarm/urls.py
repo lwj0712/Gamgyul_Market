@@ -6,8 +6,7 @@ app_name = "alarm"
 urlpatterns = [
     path("", views.AlarmListView.as_view(), name="alarm_list"),
     path(
-        "<uuid:alarm_id>/read/",
-        views.AlarmReadView.as_view(),
-        name="alarm_read",
-    ),  # 특정 알림을 읽음 상태로 바꾸는 url
+        "<uuid:alarm_id>/delete/", views.AlarmDeleteView.as_view(), name="alarm_delete"
+    ),
+    path("delete-all/", views.AlarmBulkDeleteView.as_view(), name="alarm_bulk_delete"),
 ]

@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from rest_framework import generics, permissions, status
+from rest_framework import generics, status, filters
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from .models import ChatRoom, Message
+from .models import ChatRoom, Message, WebSocketConnection
 from .serializers import ChatRoomSerializer, MessageSerializer
 
 User = get_user_model()
@@ -23,7 +24,7 @@ class ChatRoomListView(generics.ListAPIView):
     """
 
     serializer_class = ChatRoomSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="채팅방 목록 조회",
@@ -47,7 +48,7 @@ class ChatRoomCreateView(generics.CreateAPIView):
     """
 
     serializer_class = ChatRoomSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     queryset = ChatRoom.objects.all()
 
     @extend_schema(
@@ -106,7 +107,7 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     """
 
     serializer_class = ChatRoomSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     lookup_field = "id"
 
     @extend_schema(
@@ -132,10 +133,15 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     def mark_all_messages_as_read(self, chat_room):
         """
         메시지의 읽음 상태를 한번에 업데이트
+        WebSocket이 연결된 경우는 제외하고 처리
         """
-        Message.objects.filter(chat_room=chat_room, is_read=False).exclude(
-            sender=self.request.user
-        ).update(is_read=True)
+        other_user = chat_room.participants.exclude(id=self.request.user.id).first()
+        if not WebSocketConnection.objects.filter(
+            user=other_user, chat_room=chat_room, disconnected_at__isnull=True
+        ).exists():
+            Message.objects.filter(chat_room=chat_room, is_read=False).exclude(
+                sender=self.request.user
+            ).update(is_read=True)
 
 
 class ChatRoomLeaveView(generics.DestroyAPIView):
@@ -143,7 +149,7 @@ class ChatRoomLeaveView(generics.DestroyAPIView):
     요청한 사용자가 채팅방을 나가고, 남은 참여자가 없으면 채팅방 삭제
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = None  # DestroyAPIView에서는 명시적으로 None으로 설정해야함
 
     @extend_schema(
@@ -174,7 +180,7 @@ class MessageListView(generics.ListAPIView):
     """
 
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="채팅방 메시지 목록 조회",
@@ -207,7 +213,7 @@ class MessageCreateView(generics.CreateAPIView):
     """
 
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="채팅방 메시지 생성",
@@ -227,7 +233,15 @@ class MessageCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         chat_room = get_chat_room_or_404(self.request, self.kwargs["room_id"])
-        serializer.save(sender=self.request.user, chat_room=chat_room)
+        message = serializer.save(sender=self.request.user, chat_room=chat_room)
+
+        # 상대방이 WebSocket에 연결된 상태라면 즉시 읽음 처리
+        other_user = chat_room.participants.exclude(id=self.request.user.id).first()
+        if WebSocketConnection.objects.filter(
+            user=other_user, chat_room=chat_room, disconnected_at__isnull=True
+        ).exists():
+            message.is_read = True
+            message.save()
 
 
 class MessageSearchView(generics.ListAPIView):
@@ -238,7 +252,7 @@ class MessageSearchView(generics.ListAPIView):
     """
 
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="채팅방 메시지 검색",

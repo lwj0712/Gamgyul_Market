@@ -19,6 +19,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),
     path("insta/", include("insta.urls")),
+    path("report/", include("report.urls")),
     # swagger 설정
     path(
         "api/schema/", SpectacularAPIView.as_view(), name="schema"

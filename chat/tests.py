@@ -65,19 +65,30 @@ class ChatRoomTestCase(APITestCase):
         """
         테스트용 사용자 생성 및 로그인 처리
         """
+        # 데이터 초기화
+        ChatRoom.objects.all().delete()
+        Message.objects.all().delete()
+
+        # 사용자 생성
         self.user1 = User.objects.create_user(
-            username="user1", password="password123", nickname="user1_nickname"
+            email="newuser1@example.com",
+            password="newpassword123",
+            username="user1",
         )
         self.user2 = User.objects.create_user(
-            username="user2", password="password123", nickname="user2_nickname"
+            email="newuser2@example.com",
+            password="newpassword123",
+            username="user2",
         )
         self.user3 = User.objects.create_user(
-            username="user3", password="password123", nickname="user3_nickname"
+            email="newuser3@example.com",
+            password="newpassword123",
+            username="user3",
         )
 
         # 로그인 설정
         self.client = APIClient()
-        self.client.login(username="user1", password="password123")
+        self.client.login(email="newuser1@example.com", password="newpassword123")
 
     def test_chatroom_creation(self):
         """
@@ -138,10 +149,15 @@ class ChatRoomTestCase(APITestCase):
         message = Message.objects.create(
             chat_room=chatroom, sender=self.user1, content="Hello!"
         )
-        self.client.login(username="user2", password="password123")
+
+        # user2로 로그인하고 채팅방 입장
+        self.client.login(email="newuser2@example.com", password="newpassword123")
         url = reverse("chat:room_detail", kwargs={"room_id": chatroom.id})
         response = self.client.get(url)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # 메시지가 읽음 처리되었는지 확인
         message.refresh_from_db()
         self.assertTrue(message.is_read)
 
@@ -150,38 +166,24 @@ class ChatRoomTestCase(APITestCase):
         채팅방 메시지 검색 테스트: 키워드를 포함하는 메시지가 반환되는지 검증
         존재하지 않는 키워드로 검색 시 '검색된 메시지가 없습니다' 반환
         """
-        chatroom = ChatRoom.objects.filter(
-            participants__in=[self.user1, self.user2]
-        ).first()
-        if not chatroom:
-            chatroom = ChatRoom.objects.create()
-            chatroom.participants.set([self.user1, self.user2])
+        chatroom = ChatRoom.objects.create()
+        chatroom.participants.set([self.user1, self.user2])
 
         # 검색할 메시지 생성
         Message.objects.create(
             chat_room=chatroom, sender=self.user1, content="안녕하세요"
         )
 
-        # URL 확인을 위한 로그 추가
         url = reverse("chat:message_search", kwargs={"room_id": chatroom.id})
-        print(f"검색 URL: {url}")
 
-        # 1. 키워드 '안녕'으로 검색하여 '안녕하세요' 메시지를 찾는 테스트
-        url = reverse("chat:message_search", kwargs={"room_id": chatroom.id})
+        # 키워드 '안녕'으로 검색하여 '안녕하세요' 메시지를 찾는 테스트
         response = self.client.get(url, {"q": "안녕"}, format="json")
-
-        # 응답 상태 코드 로그 추가
-        print(f"응답 상태 코드: {response.status_code}")
-
-        # 검색된 메시지가 있을 때
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["content"], "안녕하세요")
 
-        # 2. 존재하지 않는 메시지를 검색
+        # 존재하지 않는 메시지를 검색
         response = self.client.get(url, {"q": "없는 메시지"}, format="json")
-
-        # 검색된 메시지가 없을 때
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
         self.assertEqual(response.data["message"], "검색된 메시지가 없습니다.")
@@ -197,10 +199,14 @@ class ChatRoomWebSocketTestCase(TransactionTestCase):
         테스트용 사용자 및 채팅방 생성
         """
         self.user1 = User.objects.create_user(
-            username="user1", password="password123", nickname=f"user1_{uuid.uuid4()}"
+            username=f"user1_{uuid.uuid4()}",
+            email="newuser1@example.com",
+            password="newpassword123",
         )
         self.user2 = User.objects.create_user(
-            username="user2", password="password123", nickname=f"user2_{uuid.uuid4()}"
+            username=f"user2_{uuid.uuid4()}",
+            email="newuser2@example.com",
+            password="newpassword123",
         )
 
         # 채팅방 생성 및 참가자 설정
@@ -247,8 +253,6 @@ class ChatRoomWebSocketTestCase(TransactionTestCase):
 
         # 응답 수신 및 검증
         response = await communicator.receive_json_from(timeout=60)
-        print(f"WebSocket 수신 메시지: {response}")
-
         self.assertIn("message_id", response, "message_id가 수신되지 않았습니다.")
         self.assertEqual(response["message_id"], self.message.id)
 

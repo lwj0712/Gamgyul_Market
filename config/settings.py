@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "imagekit",
     "crispy_forms",
     "taggit",
+    "taggit_serializer",
     "storages",
     # my apps
     "accounts",
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     "market",
     "chat",
     "alarm",
+    "report",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -124,14 +126,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-# drf-yasg 설정
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Basic": {"type": "basic"},
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
-    }
-}
-
 AUTH_USER_MODEL = "accounts.User"
 
 LANGUAGE_CODE = "ko-kr"
@@ -142,35 +136,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-# S3 사용 설정
-USE_S3 = os.getenv("USE_S3") == "TRUE"
+STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# 공통 설정
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-
-if USE_S3:
-    # AWS Setting
-    AWS_REGION = os.getenv("AWS_REGION")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com"
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-
-    # s3 static settings
-    STATIC_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
-
-    # s3 media settings
-    PUBLIC_MEDIA_LOCATION = "media"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    DEFAULT_FILE_STORAGE = "final_project.storage_backends.PublicMediaStorage"
-else:
-    STATIC_URL = "/static/"
-    MEDIA_URL = "/media/"
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -257,8 +227,6 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
-
-SOCIALACCOUNT_ADAPTER = "accounts.adapters.CustomSocialAccountAdapter"
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")

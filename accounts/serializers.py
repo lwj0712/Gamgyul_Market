@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from allauth.socialaccount.models import SocialAccount
-from insta.models import Comment, Post
 from market.models import Product
 from .models import PrivacySettings
 
@@ -40,23 +39,18 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "password",
-            "nickname",
             "bio",
             "profile_image",
             "profile_image_thumbnail",
             "social_accounts",
-            "temperature",
         )
         extra_kwargs = {
             "password": {"write_only": True},
             "email": {"required": True},
-            "nickname": {"required": False},
+            "username": {"required": True},
             "bio": {"required": False},
             "profile_image": {"required": False},
             "profile_image_thumbnail": {"required": False},
-            "latitude": {"required": False},
-            "longitude": {"required": False},
-            "temperature": {"read_only": True},
         }
 
     def validate_email(self, value):
@@ -65,6 +59,14 @@ class UserSerializer(serializers.ModelSerializer):
         """
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("이미 사용 중인 이메일입니다.")
+        return value
+
+    def validate_email(self, value):
+        """
+        이미 사용 중인 유저이름 사용 불가 유효성 검사
+        """
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("이미 사용 중인 유저 이름입니다.")
         return value
 
     def create(self, validated_data):
@@ -87,7 +89,7 @@ class CustomLoginSerializer(serializers.Serializer):
     로그인 serializer
     """
 
-    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, write_only=True)
 
 
@@ -128,22 +130,12 @@ class FollowSerializer(serializers.ModelSerializer):
     """
 
     id = serializers.CharField(read_only=True)
-    nickname = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
     profile_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
-        fields = ("id", "nickname", "profile_image")
-
-
-class CommentedPostSerializer(serializers.ModelSerializer):
-    """
-    내가 단 댓글의 포스트 정보
-    """
-
-    class Meta:
-        model = Post
-        fields = ("id", "content", "created_at")
+        fields = ("id", "username", "profile_image")
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -176,7 +168,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     following = serializers.SerializerMethodField()
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
-    commented_posts = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
 
     class Meta:
@@ -185,15 +176,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
-            "nickname",
             "bio",
             "profile_image",
-            "temperature",
             "followers",
             "following",
             "followers_count",
             "following_count",
-            "commented_posts",
             "products",
         )
 
@@ -212,14 +200,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.INT)
     def get_following_count(self, obj):
         return obj.following.count()
-
-    @extend_schema_field(CommentedPostSerializer(many=True))
-    def get_commented_posts(self, obj):
-        comments = (
-            Comment.objects.filter(user=obj).values_list("post", flat=True).distinct()
-        )
-        posts = Post.objects.filter(id__in=comments)
-        return CommentedPostSerializer(posts, many=True).data
 
     @extend_schema_field(ProductSerializer(many=True))
     def get_products(self, obj):
@@ -261,7 +241,6 @@ class ProfileSerializer(serializers.ModelSerializer):
                 "bio": f"{viewer_type}_can_see_bio",
                 "followers": f"{viewer_type}_can_see_follower_list",
                 "following": f"{viewer_type}_can_see_following_list",
-                "commented_posts": f"{viewer_type}_can_see_posts",
                 "products": f"{viewer_type}_can_see_posts",
             }
 
@@ -272,9 +251,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             always_visible = [
                 "id",
                 "username",
-                "nickname",
                 "profile_image",
-                "temperature",
             ]
             data = {k: v for k, v in data.items() if k in always_visible or k in data}
 
@@ -291,14 +268,13 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "nickname",
+            "username",
             "bio",
-            "email",
             "profile_image",
             "profile_image_thumbnail",
         ]
         extra_kwargs = {
-            "email": {"required": False},
+            "username": {"required": False},
             "profile_image": {"required": False},
         }
 
@@ -309,10 +285,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
             return obj.profile_image_thumbnail.url
         return None
 
-    def validate_email(self, value):
-        """현재 사용자를 제외한 유저들의 email 체크"""
-        if User.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
-            raise serializers.ValidationError("이 이메일은 이미 사용 중에 있습니다.")
+    def validate_username(self, value):
+        """현재 사용자를 제외한 유저들의 username 체크"""
+        if User.objects.exclude(pk=self.instance.pk).filter(username=value).exists():
+            raise serializers.ValidationError("이 사용자명은 이미 사용 중입니다.")
         return value
 
     def update(self, instance, validated_data):
@@ -327,9 +303,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
                 instance.profile_image.delete(save=False)
             instance.profile_image = profile_image
 
-        instance.nickname = validated_data.get("nickname", instance.nickname)
         instance.bio = validated_data.get("bio", instance.bio)
-        instance.email = validated_data.get("email", instance.email)
+        instance.username = validated_data.get("username", instance.username)
 
         instance.save()
         return instance
@@ -353,11 +328,11 @@ class PrivacySettingsSerializer(serializers.ModelSerializer):
 
         for field_name, value in data.items():
             if not any(field_name.startswith(prefix) for prefix in valid_prefixes):
-                raise serializers.ValidationError(f"Invalid field name: {field_name}")
+                raise serializers.ValidationError(f"잘못된 필드 이름: {field_name}")
 
             if not isinstance(value, bool):
                 raise serializers.ValidationError(
-                    f"{field_name} must be a boolean value"
+                    f"{field_name} 참, 거짓 값이어야 합니다"
                 )
 
         return data
@@ -368,7 +343,7 @@ class PrivacySettingsSerializer(serializers.ModelSerializer):
         타입에 따라 볼 수 있는 필드 값 적용
         """
         if viewer_type not in ["follower", "following", "others"]:
-            raise serializers.ValidationError("Invalid viewer type")
+            raise serializers.ValidationError("잘못된 뷰어 유형입니다.")
 
         visible_fields = []
         for field in self.Meta.model._meta.fields:
@@ -387,4 +362,4 @@ class ProfileSearchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "nickname", "profile_image"]
+        fields = ["id", "username", "profile_image"]
