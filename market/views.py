@@ -17,6 +17,14 @@ from drf_spectacular.utils import (
 from drf_spectacular.types import OpenApiTypes
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+
+
+class ProductListPagination(PageNumberPagination):
+    """페이지네이션 정의"""
+
+    page_size = 10
+    max_page_size = 100
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -113,6 +121,7 @@ class ProductListView(generics.ListAPIView):
     template_name = "market/product_list.html"
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name", "user__username", "variety", "growing_region"]
+    pagination_class = ProductListPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -129,9 +138,9 @@ class ProductListView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if request.accepted_renderer.format == "html":
-            return Response({"products": queryset})
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+            context = {"products": self.paginate_queryset(queryset)}
+            return Response(context, template_name=self.template_name)
+        return super().list(request, *args, **kwargs)
 
 
 @extend_schema(
