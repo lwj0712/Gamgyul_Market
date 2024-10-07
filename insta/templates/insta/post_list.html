@@ -6,15 +6,19 @@
     <title>Post List</title>
 </head>
 <body>
-    <h1>Post List</h1>
+    <h1>감귤하우스 Post List</h1>
     <a href="{% url 'insta:post-create' %}">글 업로드</a>
 
     {% for post in posts %}
         <div>
             <h2>{{ post.user.username }}</h2>
-            {% if post.image %}
-                <img src="{{ post.image.url }}"/>
-            {% endif %}
+            {% comment %} {% for image in post.images.all %}
+            <img src="{{ image.image.url }}" alt="Post Image" />
+            {% endfor %} {% endcomment %}
+            {% for image_url in post.images %}
+                <img src="{{ image_url }}" alt="" />
+            {% endfor %}
+
             <p>{{ post.content }}</p>
             <p><strong>작성일:</strong> {{ post.created_at }}</p>
             {% if post.updated_at and post.created_at != post.updated_at %}
