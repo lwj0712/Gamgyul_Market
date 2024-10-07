@@ -1,5 +1,4 @@
 from django.db import IntegrityError
-from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django_filters import rest_framework as filters
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,6 +20,7 @@ from accounts.serializers import (
     PrivacySettingsSerializer,
     ProfileSearchSerializer,
 )
+from accounts.filters import ProfileFilter
 from accounts.models import Follow, PrivacySettings
 
 User = get_user_model()
@@ -410,28 +410,7 @@ class UnfollowView(generics.DestroyAPIView):
             )
 
 
-class ProfileFilter(filters.FilterSet):
-    """
-    username, email로 필터
-    """
-
-    q = filters.CharFilter(method="filter_search", label="Search query")
-
-    class Meta:
-        model = User
-        fields = ["q"]
-
-    def filter_search(self, queryset, name, value):
-        """value가 없을 때 빈 queryset을 반환"""
-        if value:
-            return queryset.filter(
-                Q(username__icontains=value) | Q(email__icontains=value)
-            ).distinct()
-        return queryset.none()
-
-
 class ProfileSearchView(generics.ListAPIView):
-
     serializer_class = ProfileSearchSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = (filters.DjangoFilterBackend,)
