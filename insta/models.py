@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from taggit.managers import TaggableManager
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFill
 
 User = get_user_model()
 
@@ -27,6 +29,12 @@ class PostImage(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="insta/")
+    image_1080 = ImageSpecField(
+        source="image",
+        processors=[ResizeToFill(1080, 1080)],
+        format="JPEG",
+        options={"quality": 90},
+    )
 
     class Meta:
         ordering = ["post"]
