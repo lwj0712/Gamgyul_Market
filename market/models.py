@@ -74,15 +74,3 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for {self.product.name}"
-
-
-class Receipt(models.Model):
-    """
-    거래 내역을 저장하는 영수증 모델
-    """
-
-    product = models.TextField()
-    quantity = models.IntegerField()
-    seller = models.TextField()
-    buyer = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)

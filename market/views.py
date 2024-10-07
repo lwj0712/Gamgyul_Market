@@ -2,21 +2,22 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from .models import Product, ProductImage, Review
 from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
+from config.pagination import LimitOffsetPagination, PageNumberPagination
 from django.db.models import Avg, Q
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,
     OpenApiExample,
     OpenApiResponse,
 )
-from drf_spectacular.types import OpenApiTypes
-from rest_framework.filters import SearchFilter
-from django_filters.rest_framework import DjangoFilterBackend
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -113,6 +114,7 @@ class ProductListView(generics.ListAPIView):
     template_name = "market/product_list.html"
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name", "user__username", "variety", "growing_region"]
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -129,9 +131,9 @@ class ProductListView(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if request.accepted_renderer.format == "html":
-            return Response({"products": queryset})
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+            context = {"products": self.paginate_queryset(queryset)}
+            return Response(context, template_name=self.template_name)
+        return super().list(request, *args, **kwargs)
 
 
 @extend_schema(
