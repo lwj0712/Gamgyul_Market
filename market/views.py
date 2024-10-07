@@ -5,11 +5,11 @@ from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
 from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from .models import Product, ProductImage, Review
 from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
+from config.pagination import LimitOffsetPagination, PageNumberPagination
 from django.db.models import Avg, Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -18,13 +18,6 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiResponse,
 )
-
-
-class ProductListPagination(PageNumberPagination):
-    """페이지네이션 정의"""
-
-    page_size = 10
-    max_page_size = 100
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -121,7 +114,7 @@ class ProductListView(generics.ListAPIView):
     template_name = "market/product_list.html"
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ["name", "user__username", "variety", "growing_region"]
-    pagination_class = ProductListPagination
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
