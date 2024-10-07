@@ -65,6 +65,11 @@ class ChatRoomTestCase(APITestCase):
         """
         테스트용 사용자 생성 및 로그인 처리
         """
+        # 데이터 초기화
+        ChatRoom.objects.all().delete()
+        Message.objects.all().delete()
+
+        # 사용자 생성
         self.user1 = User.objects.create_user(
             email="newuser1@example.com",
             password="newpassword123",
