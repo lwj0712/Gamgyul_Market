@@ -146,7 +146,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             connection.mark_disconnected()
 
     @database_sync_to_async
-    def mark_all_messages_as_read(self, room_id, user):
+    def mark_messages_as_read(self, room_id, user):
         """
         사용자가 채팅방에 입장할 때, 읽지 않은 메시지를 모두 읽음 처리
         """
@@ -156,7 +156,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         ).update(is_read=True)
 
     @database_sync_to_async
-    def mark_single_message_as_read(self, message_id):
+    def mark_message_as_read(self, message_id):
         """
         실시간 전송된 개별 메시지를 읽음 상태로 업데이트
         """
