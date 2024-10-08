@@ -1,16 +1,22 @@
 import os
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from accounts.models import User, Follow
+from accounts.models import Follow
 from .models import Post
+
+
+User = get_user_model()
 
 
 class TestPostAPI(APITestCase):
     def setUp(self):
         """테스트를 위한 APIClient 인스턴스 생성"""
         self.client = APIClient()
-        self.user = User.objects.create_user(username="testuser", password="testpass")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass", email="testuser@example.com"
+        )
 
     def test_create_post(self):
         """게시글 생성 테스트"""
@@ -34,7 +40,9 @@ class TestPostAPI(APITestCase):
     def test_post_list_authenticated_user_with_followings(self):
         """팔로우한 사용자가 있는 인증된 사용자의 게시글 목록 조회 테스트"""
         followed_user = User.objects.create_user(
-            username="followed_user", password="password2"
+            username="followed_user",
+            password="password2",
+            email="followed_user@example.com",
         )
         Follow.objects.create(follower=self.user, following=followed_user)
         post = Post.objects.create(
@@ -52,7 +60,9 @@ class TestPostAPI(APITestCase):
 
     def test_post_list_authenticated_user_without_followings(self):
         """팔로우한 사용자가 없는 인증된 사용자의 게시글 목록 조회 테스트"""
-        popular_user = User.objects.create_user(username="popularuser", password="pass")
+        popular_user = User.objects.create_user(
+            username="popularuser", password="pass", email="popularuser@example.com"
+        )
         popular_user.followers_count = 100  # 인기 사용자를 위한 필드 설정
         popular_user.save()
         post = Post.objects.create(user=popular_user, content="Post from popular user")
@@ -66,7 +76,9 @@ class TestPostAPI(APITestCase):
 
     def test_post_list_unauthenticated_user(self):
         """인증되지 않은 사용자의 게시글 목록 조회 테스트"""
-        popular_user = User.objects.create_user(username="popularuser", password="pass")
+        popular_user = User.objects.create_user(
+            username="popularuser", password="pass", email="popularuser@example.com"
+        )
         popular_user.followers_count = 100  # 인기 사용자를 위한 필드 설정
         popular_user.save()
         post = Post.objects.create(user=popular_user, content="Post from popular user")
