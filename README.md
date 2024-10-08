@@ -1,12 +1,10 @@
-<img src="static/readme_img/gamgyulhouse.png" width="100%"/>
+# 🍊 감귤하우스 
+<img src="static/images/readme_img/gamgyulhouse.png" width="100%"/>
 
 <br>
 
-# 🍊 감귤하우스 
-
 - 프로젝트 명 : Gamgyul House
 - 프로젝트 진행 기간 : 24.09.20 ~ 24.10.13
-- URL : 
 
 <br>
 
@@ -14,11 +12,9 @@
 상품을 등록하지 않아도 일상을 공유하며 즐거운 SNS 활동을 할 수 있습니다. 
 사진과 함께 게시물을 작성하여 자신의 일상을 공유할 수 있습니다. 다른 사용자를 팔로우하면 유저가 올린 게시물을 홈 피드에서 확인할 수 있습니다. 다른 사용자와 메시지를 주고 받을 수도 있습니다. 피드를 구경하다가 마음에 드는 게시물을 발견했다면 좋아요와 댓글을 남길 수 있습니다.
 
-
 <br>
 
-
-## 🏡 팀 소개
+## 🏡 1. 팀 소개
 
 | 이름   | 사진  | 깃허브 주소               | 담당 파트            |
 |--------|-------|----------------------------|----------------------|
@@ -29,9 +25,9 @@
 
 <br>
 
-## 🏁 개발 목표
+## 2. 개발 목표
 
-우리 감귤하우스 팀은 현대적이고 확장 가능한 SNS 및 사용자 간 직거래 플랫폼을 개발하는 것을 목표로 하고 있습니다. 이 프로젝트를 통해 최신 웹 개발 기술을 학습하고 실제 프로덕션 환경에서의 개발 경험을 쌓고자 합니다. 주요 개발 목표는 다음과 같습니다.
+저희 감귤하우스 팀은 현대적이고 확장 가능한 SNS 및 사용자 간 직거래 플랫폼을 개발하는 것을 목표로 하고 있습니다. 이 프로젝트를 통해 최신 웹 개발 기술을 학습하고 실제 프로덕션 환경에서의 개발 경험을 쌓고자 합니다. 주요 개발 목표는 다음과 같습니다.
 
 <details>
     <summary><h4>📌 개발 목표</h4></summary>
@@ -74,15 +70,15 @@
 
 <br>
 
-이 프로젝트를 통해 우리 팀은 현대적인 웹 개발 기술 스택을 종합적으로 활용하며, 실무에서 발생할 수 있는 다양한 기술적 도전과제를 해결하는 경험을 쌓을 것입니다. 이를 통해 팀원 각자의 기술적 역량을 향상시키는 동시에, 효과적인 의사소통, 작업 분배, 코드 리뷰 등 개발 과정에서 발생하는 팀원 간의 상호작용을 원활히 관리하고 조율하는 능력도 함께 키울 것입니다.
+이 프로젝트를 통해 저희 팀은 현대적인 웹 개발 기술 스택을 종합적으로 활용하며, 실무에서 발생할 수 있는 다양한 기술적 도전과제를 해결하는 경험을 쌓을 것입니다. 이를 통해 팀원 각자의 기술적 역량을 향상시키는 동시에, 효과적인 의사소통, 작업 분배, 코드 리뷰 등 개발 과정에서 발생하는 팀원 간의 상호작용을 원활히 관리하고 조율하는 능력도 함께 키우는 것이 목표입니다.
 
 </details>
 
 <br>
 
-## 🔧 기술 및 개발 환경
+## 3. 기술 스택 및 아키텍처
 
-### 기술
+### 3.1 기술 스택
 <div align=left>
   <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"> 
   <br>
@@ -109,26 +105,41 @@
   <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
 </div>
 
+<br>
 
-  <br>
+### 3.2 아키텍처
 
-### 개발 환경
+<br>
 
+## 4. 개발 환경 및 배포 URL
 
-- Tools
-    - VSCODE, GIT
-- Web Framework
-    - Python, Django, DjangoRestFrameWork
-- 배포 환경
-    - AWS
-- 협업 툴
-    - Discord, GitHub, Notion, GatherTown, Figma
+### 4.1 개발 환경
 
+- Tools:
 
-### 배포 URL
+    <img src="https://img.shields.io/badge/VSCode-2496ED?style=for-the-badge&logo=VSCode&logoColor=white"/>
+    <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
 
-- 사이트 URL:
-- Swagger URL:
+- Web Framework:
+
+    <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+    <img src="https://img.shields.io/badge/django-092E20?style=for-the-badge&logo=django&logoColor=white">
+    <img src="https://img.shields.io/badge/DRF-333333?style=for-the-badge&logo=DRF&logoColor=white">
+
+- 배포 환경:
+
+    <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white">
+
+- 협업 툴:
+
+    <img src="https://img.shields.io/badge/discord-5865F2?style=for-the-badge&logo=Discord&logoColor=white">
+    <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
+    <img src="https://img.shields.io/badge/notion-000000?style=for-the-badge&logo=notion&logoColor=white">
+    <img src="https://img.shields.io/badge/figma-F24E1E?style=for-the-badge&logo=Figma&logoColor=white">
+
+### 4.2 배포 URL
+
+- URL:
 - 테스트용 계정
 
 ```markdown
@@ -141,11 +152,112 @@ id: admin
 pw: 1234
 ```
 
-## 아키텍쳐
+## 5. API 문서 및 URL 구조
 
-## 디렉터리 구조
+### 5.1 API 문서
 
-## WBS
+- Swagger URL : http://localhost:8000/api/schema/swagger-ui/
+- Redoc URl : http://localhost:8000/api/schema/redoc/
+
+### 5.2 URL 구조
+
+<details>
+    <summary><h4>🔑 accounts</h4></summary>
+
+| app: accounts | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| signup/ | POST | 회원가입 |  |  |  |
+| login/ | POST | 로그인 |  |  |  |
+| logout/ | POST | 로그아웃 | ✅ |  |  |
+| change-password/ | POST | 비밀번호 변경 | ✅ |  |  |
+| deactivate/ | POST | 계정 비활성화 | ✅ |  |  |
+| delete/ | DELETE | 계정 삭제 | ✅ |  |  |
+| request-reactivation/ | POST | 계정 재활성화 요청 | ✅ |  |  |
+| activate/\<uidb64\>/\<token\>/ | GET | 계정 활성화 |  |  |  |
+| profile/\<str:username\>/ | GET | 유저 프로필 조회 |  |  |  |
+| profile/ | PATCH | 유저 프로필 수정 | ✅ | ✅ |  |
+| privacy-settings/ | GET | 개인정보 설정 조회 | ✅ | ✅ |  |
+| follow/\<int:pk\>/ | POST | 사용자 팔로우 | ✅ |  |  |
+| unfollow/\<int:pk\>/ | POST | 사용자 언팔로우 | ✅ |  |  |
+| search/ | GET | 유저 프로필 검색 | ✅ |  |  |
+| recommend/ | GET | 친구 추천 | ✅ |  |  |
+
+</details>
+
+<details>
+    <summary><h4>📢 alarm</h4></summary>
+
+| app: alarm | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| alarms/ | GET | 현재 로그인한 사용자의 알림 목록 조회 | ✅ |  |  |
+| alarms/\<int:alarm_id\>/ | DELETE | 특정 알림 삭제 | ✅ | ✅ | 해당 알림의 수신자여야 함 |
+| alarms/bulk-delete/ | DELETE | 모든 알림 삭제 | ✅ |  | 해당 알림의 수신자여야 함 |
+
+</details>
+
+<details>
+    <summary><h4>🤝 chat</h4></summary>
+
+| app: chat | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| / | GET | 현재 사용자가 속한 채팅방 목록 조회 | ✅ |  |  |
+| /create/ | POST | 1대1 채팅방 생성 | ✅ |  |  |
+| /\<uuid:room_id\>/ | GET | 특정 채팅방 정보 조회 | ✅ |  | 해당 채팅방 참여자여야 함 |
+| /\<uuid:room_id\>/leave/ | DELETE | 채팅방 나가기 | ✅ | ✅ | 해당 채팅방 참여자여야 함 |
+| /\<uuid:room_id\>/messages/ | GET | 채팅방 내 메시지 목록 조회 | ✅ |  | 해당 채팅방 참여자여야 함 |
+| /\<uuid:room_id\>/messages/send/ | POST | 메시지 생성 | ✅ |  | 해당 채팅방 참여자여야 함 |
+| /\<uuid:room_id\>/messages/search/ | GET | 메시지 검색 | ✅ |  | 해당 채팅방 참여자여야 함 |
+
+</details>
+
+<details>
+    <summary><h4>📷 insta</h4></summary>
+
+| app: insta | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| /posts/ | GET | 게시글 목록 조회 |  |  |  |
+| /posts/\<int:pk\>/ | GET | 게시글 상세 조회 |  |  |  |
+| /posts/create/ | POST | 게시글 작성 | ✅ |  |  |
+| /posts/\<int:pk\>/delete/ | DELETE | 게시글 삭제 | ✅ | ✅ |  |
+| /posts/\<int:post_id\>/comments/ | GET, POST | 게시글에 댓글 목록 조회 및 댓글 작성 | ✅ |  |  |
+| /comments/\<int:pk\>/ | GET | 댓글 상세 조회 | ✅ | ✅ |  |
+| /posts/\<int:post_id\>/like/ | POST | 게시글 좋아요 | ✅ |  |  |
+| /posts/search/ | GET | 태그로 게시글 검색 |  |  |  |
+
+</details>
+
+<details>
+    <summary><h4>🛒 products</h4></summary>
+
+| app: products | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| /products/ | GET | 상품 목록 조회 |  |  |  |
+| /products/create/ | POST | 상품 생성 | ✅ |  |  |
+| /products/\<int:id\>/ | GET | 상품 상세 조회 |  |  |  |
+| /products/\<int:id\>/update/ | PATCH | 상품 정보 수정 | ✅ | ✅ |  |
+| /products/\<int:id\>/delete/ | DELETE | 상품 삭제 | ✅ | ✅ |  |
+| /products/\<int:product_id\>/reviews/\<int:id\>/delete/ | DELETE | 상품 리뷰 삭제 | ✅ | ✅ |  |
+
+</details>
+
+<details>
+    <summary><h4>🚨 report</h4></summary>
+
+| app: report | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
+| :-- | --- | --- | :-: | :-: | --- |
+| /create/ | POST | 신고 생성 | ✅ |  |  |
+
+</details>
+
+<br>
+
+## 6. 프로젝트 구조와 개발 일정
+
+### 6.1 프로젝트 구조
+
+<br>
+
+### 6.2 개발 일정
 
 ```mermaid
 gantt
@@ -182,8 +294,8 @@ gantt
 
 <br>
 
-## ERD
-<img src="static/readme_img/감귤마켓ERD.png" width="100%"/>
+## 7. ERD
+<img src="static/images/readme_img/감귤마켓ERD.png" width="100%"/>
 
 <details>
     <summary><h4>📌 관계도 해설</h4></summary>
@@ -232,13 +344,11 @@ gantt
 
 <br>
 
-## API 명세서
+## 8. 시연 영상
 
-## 시연 영상
+## 9. 트러블 슈팅
 
-## 트러블 슈팅
-
-## 🤙 컨벤션
+## 10. 🤙 컨벤션
 
 프로젝트의 일관성 유지와 협업 효율성을 높이기 위해 아래 컨벤션을 따릅니다.
  
@@ -439,7 +549,7 @@ urlpatterns = [
 
 <br>
 
-## 프로젝트를 마치며
+## 11. 프로젝트를 마치며
 
 김동규
 > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
