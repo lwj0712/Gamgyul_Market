@@ -20,23 +20,19 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("insta/", include("insta.urls")),
     path("report/", include("report.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/swagger-ui/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path(
+        "api/schema/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
+    path("docs/json/", SpectacularJSONAPIView.as_view(), name="schema-json"),
 ]
-
-if settings.DEBUG:
-    urlpatterns += [
-        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-        path(
-            "api/schema/swagger-ui/",
-            SpectacularSwaggerView.as_view(url_name="schema"),
-            name="swagger-ui",
-        ),
-        path(
-            "api/schema/redoc/",
-            SpectacularRedocView.as_view(url_name="schema"),
-            name="redoc",
-        ),
-        path("docs/json/", SpectacularJSONAPIView.as_view(), name="schema-json"),
-    ]
 
 # 정적 파일 제공 설정 (개발 환경에서만)
 if settings.DEBUG:
