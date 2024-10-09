@@ -109,7 +109,8 @@ class LoginView(APIView):
                 if user.is_active:
                     login(request, user)
                     return Response(
-                        {"detail": "로그인 성공"}, status=status.HTTP_200_OK
+                        {"detail": "로그인 성공", "username": user.username},
+                        status=status.HTTP_200_OK,
                     )
                 else:
                     return Response(
@@ -126,6 +127,14 @@ class LoginView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
 
 
 class LogoutView(APIView):
