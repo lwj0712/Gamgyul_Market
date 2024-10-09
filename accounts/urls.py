@@ -1,6 +1,4 @@
 from django.urls import path
-from django.conf import settings
-from django.conf.urls.static import static
 from .views import account, profile, recommendation
 
 app_name = "accounts"
@@ -10,6 +8,7 @@ urlpatterns = [
     path("signup/", account.SignUpView.as_view(), name="signup"),
     path("login/", account.LoginView.as_view(), name="login"),
     path("logout/", account.LogoutView.as_view(), name="logout"),
+    path("current-user/", account.CurrentUserView.as_view(), name="current_user"),
     path(
         "change-password/", account.PasswordChangeView.as_view(), name="change_password"
     ),

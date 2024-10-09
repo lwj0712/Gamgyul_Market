@@ -20,22 +20,20 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("insta/", include("insta.urls")),
     path("report/", include("report.urls")),
-    # swagger 설정
-    path(
-        "api/schema/", SpectacularAPIView.as_view(), name="schema"
-    ),  # API 스키마 제공(yaml파일)
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger-ui/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
-    ),  # 테스트할 수 있는 UI
+    ),
     path(
         "api/schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
-    ),  # API 문서화를 위한 UI
+    ),
     path("docs/json/", SpectacularJSONAPIView.as_view(), name="schema-json"),
 ]
 
+# 정적 파일 제공 설정 (개발 환경에서만)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

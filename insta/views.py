@@ -1,14 +1,22 @@
+from django.shortcuts import get_object_or_404
+from django.db.models import Count
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.pagination import LimitOffsetPagination
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiResponse,
+    OpenApiExample,
+    OpenApiParameter,
+)
+from drf_spectacular.types import OpenApiTypes
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Post, Comment, Like
 from accounts.models import Follow, User
+from config.pagination import LimitOffsetPagination, PageNumberPagination
+from .filters import PostFilter
 from .serializers import (
     PostSerializer,
     CommentSerializer,
@@ -16,39 +24,110 @@ from .serializers import (
 )
 
 
-class PostPagination(LimitOffsetPagination):
-    default_limit = 10
-    max_limit = 100
-
-
 class PostListView(generics.ListAPIView):
     """게시물 목록 조회 view"""
 
     serializer_class = PostSerializer
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = "insta/post_list.html"
     permission_classes = [AllowAny]
-    pagination_class = PostPagination
+    pagination_class = LimitOffsetPagination
 
+    @extend_schema(
+        summary="게시물 목록 조회",
+        description=(
+            "사용자가 팔로우한 사용자들의 최신 게시물을 가져옵니다. 팔로우한 사용자가 없을 경우, 인기 사용자의 게시물을 반환합니다."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="limit",
+                description="결과의 최대 수",
+                required=False,
+                type=int,
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="limit 값 예시",
+                        description="최대 10개의 게시물을 반환",
+                        value=10,
+                    )
+                ],
+            ),
+            OpenApiParameter(
+                name="offset",
+                description="결과의 시작점",
+                required=False,
+                type=int,
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="offset 값 예시",
+                        description="처음부터가 아닌 5번째 게시물부터 시작",
+                        value=5,
+                    )
+                ],
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="게시물 목록 반환에 성공하였습니다.",
+                response={
+                    "type": "object",
+                    "properties": {
+                        "count": {"type": "integer"},
+                        "next": {"type": "string", "nullable": True},
+                        "previous": {"type": "string", "nullable": True},
+                        "results": {
+                            "type": "array",
+                            "items": {"$ref": "#/components/schemas/Post"},
+                        },
+                    },
+                },
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="성공적인 응답 예시",
+                        description="게시물 목록을 반환합니다.",
+                        value={
+                            "count": 2,
+                            "next": None,
+                            "previous": None,
+                            "results": [
+                                {
+                                    "id": 1,
+                                    "title": "첫 번째 게시물",
+                                    "content": "이것은 첫 번째 게시물입니다.",
+                                    "created_at": "2024-10-07T10:00:00Z",
+                                },
+                                {
+                                    "id": 2,
+                                    "title": "두 번째 게시물",
+                                    "content": "이것은 두 번째 게시물입니다.",
+                                    "created_at": "2024-10-07T12:00:00Z",
+                                },
+                            ],
+                        },
+                    )
+                ],
+            ),
+        },
+        tags=["post"],
+    )
     def get_queryset(self):
-        """
-        사용자가 팔로우한 사용자들의 게시물 또는
-        인기 사용자의 게시물 반환
-        """
         user = self.request.user
 
         if user.is_authenticated:
-            # 팔로우한 사용자들의 게시물을 가져옴
-            followed_users = Follow.objects.filter(follower=user).values_list(
-                "followed_user", flat=True
+            following_users = Follow.objects.filter(follower=user).values_list(
+                "following", flat=True
             )
 
-            if followed_users.exists():
-                return Post.objects.filter(user__in=followed_users).order_by(
+            if following_users.exists():
+                return Post.objects.filter(user__in=following_users).order_by(
                     "-created_at"
                 )
 
-        # 팔로우한 사용자가 없거나, 인증되지 않은 사용자일 경우 팔로워가 많은 사용자의 게시물 반환
+        """
+        팔로우한 사용자가 없거나, 인증되지 않은 사용자일 경우
+        팔로워가 많은 사용자의 게시물 반환
+        """
         popular_users = User.objects.annotate(
             followers_count=Count("followers")
         ).order_by("-followers_count")[:10]
@@ -72,15 +151,44 @@ class PostCreateView(generics.CreateAPIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        """게시물 작성 페이지 렌더링"""
-        return render(request, "insta/post_create.html")
-
+    @extend_schema(
+        summary="게시물 작성",
+        description="사용자가 텍스트와 이미지를 포함한 게시물을 작성합니다.",
+        request=PostSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="게시물 작성에 성공하였습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="성공적인 게시물 작성 예시",
+                        value={
+                            "id": 1,
+                            "title": "첫 번째 게시물",
+                            "content": "게시물 내용",
+                            "created_at": "2024-10-07T12:00:00Z",
+                        },
+                    )
+                ],
+            ),
+            400: OpenApiResponse(
+                description="잘못된 요청 데이터입니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="잘못된 요청 예시",
+                        value={"detail": "필수 필드가 누락되었습니다."},
+                    )
+                ],
+            ),
+        },
+        tags=["post"],
+    )
     def post(self, request, *args, **kwargs):
         """게시물 작성 처리"""
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=self.request.user)  # 사용자 정보 추가 후 게시물 생성
+            serializer.save(user=self.request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -92,14 +200,46 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostSerializer
     parser_classes = (MultiPartParser, FormParser)
 
+    @extend_schema(
+        summary="게시물 상세 조회 및 수정",
+        description="게시물의 상세 내용을 조회하거나 수정, 삭제할 수 있습니다. 수정 및 삭제는 작성자만 가능합니다.",
+        responses={
+            200: OpenApiResponse(
+                description="게시물 조회에 성공하였습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="성공적인 게시물 조회 예시",
+                        value={
+                            "id": 1,
+                            "title": "첫 번째 게시물",
+                            "content": "이것은 첫 번째 게시물입니다.",
+                            "created_at": "2024-10-07T12:00:00Z",
+                        },
+                    )
+                ],
+            ),
+            403: OpenApiResponse(
+                description="수정 권한이 없습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="수정 권한 없음",
+                        value={"detail": "글 작성자만 수정할 수 있습니다."},
+                    )
+                ],
+            ),
+        },
+        tags=["post"],
+    )
     def get_permissions(self):
         """사용자 권한 설정"""
         if self.request.method in ["PUT", "PATCH"]:
             return [IsAuthenticated()]
-        return [AllowAny()]  # 게시글 상세 조회 시 인증 여부 상관없이 허용
+        return [AllowAny()]
 
     def perform_update(self, serializer):
-        """수정 시 작성한 사용자만 가능하도록 설정"""
+        """게시물 작성자만 수정 가능"""
         instance = serializer.instance
         if instance.user != self.request.user:
             raise PermissionDenied("글 작성자만 수정할 수 있습니다.")
@@ -112,18 +252,80 @@ class PostDeleteView(generics.DestroyAPIView):
     queryset = Post.objects.all()
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="게시물 삭제",
+        description="게시물을 삭제합니다. 작성자만 삭제할 수 있습니다.",
+        responses={
+            204: OpenApiResponse(description="게시물 삭제에 성공하였습니다."),
+            403: OpenApiResponse(
+                description="삭제 권한이 없습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="삭제 권한 없음",
+                        value={"detail": "글 작성자만 삭제할 수 있습니다."},
+                    )
+                ],
+            ),
+        },
+        tags=["post"],
+    )
     def perform_destroy(self, instance):
-        """삭제 시 작성한 사용자만 가능하도록 설정"""
+        """게시물 작성자만 삭제 가능"""
         if instance.user != self.request.user:
             raise PermissionDenied("글 작성자만 삭제할 수 있습니다.")
         instance.delete()
 
 
-class CommentListView(generics.ListCreateAPIView):
-    """댓글 목록 조회 및 작성 view"""
+class CommentListCreateView(generics.ListCreateAPIView):
+    """댓글 목록 조회, 작성 view"""
 
     serializer_class = CommentSerializer
 
+    @extend_schema(
+        summary="댓글 목록 조회 및 작성",
+        description="특정 게시물에 대한 댓글을 조회하거나 작성할 수 있습니다.",
+        parameters=[
+            OpenApiParameter(
+                name="post_id", description="게시물의 ID", required=True, type=int
+            )
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="댓글 목록 조회에 성공하였습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="댓글 목록 조회 예시",
+                        value=[
+                            {
+                                "id": 1,
+                                "content": "첫 번째 댓글입니다.",
+                                "created_at": "2024-10-08T09:00:00Z",
+                            },
+                            {
+                                "id": 2,
+                                "content": "두 번째 댓글입니다.",
+                                "created_at": "2024-10-08T09:05:00Z",
+                            },
+                        ],
+                    )
+                ],
+            ),
+            201: OpenApiResponse(description="댓글 작성에 성공하였습니다."),
+            403: OpenApiResponse(
+                description="작성 권한이 없습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="작성 권한 없음",
+                        value={"detail": "인증된 사용자만 댓글을 작성할 수 있습니다."},
+                    )
+                ],
+            ),
+        },
+        tags=["comment"],
+    )
     def get_permissions(self):
         """댓글 작성 시 인증된 사용자만 허용, 조회는 누구나 가능"""
         if self.request.method == "POST":
@@ -147,40 +349,129 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
+    @extend_schema(
+        summary="댓글 상세 조회, 수정 및 삭제",
+        description="특정 댓글을 조회하거나 수정, 삭제할 수 있습니다. 수정 및 삭제는 작성자만 가능합니다.",
+        responses={
+            200: OpenApiResponse(description="댓글 조회에 성공하였습니다."),
+            403: OpenApiResponse(
+                description="수정/삭제 권한이 없습니다.",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="권한 없음",
+                        value={"detail": "댓글 작성자만 수정할 수 있습니다."},
+                    )
+                ],
+            ),
+        },
+        tags=["comment"],
+    )
     def get_permissions(self):
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return [IsAuthenticated()]
-        return [AllowAny()]  # 댓글 조회는 누구나 가능
+        return [AllowAny()]
 
     def perform_destroy(self, instance):
-        """삭제 시 작성한 사용자만 가능하도록 설정"""
+        """댓글 작성자만 삭제 가능"""
         if instance.user != self.request.user:
             raise PermissionDenied("댓글 작성자만 삭제할 수 있습니다.")
         instance.delete()
 
 
 class LikeView(generics.GenericAPIView):
-    """좋아요 추가 및 취소 view"""
+    """좋아요 추가, 취소 view"""
 
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="게시물 좋아요 추가/취소",
+        description="게시물에 좋아요를 추가하거나 취소할 수 있습니다.",
+        parameters=[
+            OpenApiParameter(
+                name="post_id", description="게시물의 ID", required=True, type=int
+            )
+        ],
+        responses={
+            201: OpenApiResponse(description="좋아요 추가 성공"),
+            204: OpenApiResponse(description="좋아요 취소 성공"),
+            404: OpenApiResponse(description="게시물 찾을 수 없음"),
+        },
+        tags=["like"],
+    )
     def post(self, request, post_id):
-        """좋아요 추가 또는 취소"""
         post = get_object_or_404(Post, id=post_id)
         like, created = Like.objects.get_or_create(user=request.user, post=post)
 
         if created:
-            # 좋아요가 추가되었을 때
             return Response(status=status.HTTP_201_CREATED)
-        else:
-            # 좋아요가 이미 존재할 때 삭제
-            like.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        like.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @extend_schema(
+        summary="좋아요를 누른 사용자 목록 조회",
+        description="특정 게시물에 좋아요를 누른 사용자들의 목록을 조회합니다.",
+        responses={
+            200: OpenApiResponse(
+                description="사용자 목록 조회 성공",
+                examples=[
+                    OpenApiExample(
+                        "Example 1",
+                        summary="좋아요 사용자 목록 예시",
+                        value=[{"username": "user1"}, {"username": "user2"}],
+                    )
+                ],
+            )
+        },
+        tags=["like"],
+    )
     def get(self, request, post_id):
         """좋아요를 누른 사용자 목록 조회"""
         post = get_object_or_404(Post, id=post_id)
         likes = Like.objects.filter(post=post).select_related("user")
         serializer = self.get_serializer(likes, many=True)
         return Response(serializer.data)
+
+
+class TagPostListView(generics.ListAPIView):
+    """태그로 게시물 검색 view"""
+
+    serializer_class = PostSerializer
+    permission_classes = [AllowAny]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = PostFilter
+
+    @extend_schema(
+        summary="태그로 게시물 검색",
+        description="하나 이상의 태그로 게시물을 검색합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="tags",
+                description="검색할 태그 목록",
+                required=False,
+                type=OpenApiTypes.STR,
+                examples=[
+                    OpenApiExample(
+                        "Example tags",
+                        value=["tag1", "tag2"],
+                    ),
+                ],
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(description="게시물 검색에 성공하였습니다."),
+            404: OpenApiResponse(description="태그에 해당하는 게시물이 없습니다."),
+        },
+        tags=["tag"],
+    )
+    def get_queryset(self):
+        """태그를 기준으로 게시물 검색"""
+        tags = self.request.query_params.getlist("tags")
+        if tags:
+            return (
+                Post.objects.filter(tags__name__in=tags)
+                .distinct()
+                .order_by("-created_at")
+            )
+        return Post.objects.none()

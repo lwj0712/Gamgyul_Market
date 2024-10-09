@@ -1,6 +1,6 @@
 from django.db import IntegrityError
-from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django_filters import rest_framework as filters
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -20,6 +20,7 @@ from accounts.serializers import (
     PrivacySettingsSerializer,
     ProfileSearchSerializer,
 )
+from accounts.filters import ProfileFilter
 from accounts.models import Follow, PrivacySettings
 
 User = get_user_model()
@@ -410,9 +411,10 @@ class UnfollowView(generics.DestroyAPIView):
 
 
 class ProfileSearchView(generics.ListAPIView):
-
     serializer_class = ProfileSearchSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = ProfileFilter
 
     @extend_schema(
         summary="프로필 검색",
@@ -450,12 +452,11 @@ class ProfileSearchView(generics.ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        """
-        유저 이름, 이메일로 프로필 검색
-        """
-        query = self.request.query_params.get("q", "")
-        if query:
-            return User.objects.filter(
-                Q(username__icontains=query) | Q(email__icontains=query)
-            ).distinct()
-        return User.objects.none()
+        return User.objects.all()
+
+    def filter_queryset(self, queryset):
+        """쿼리 파라미터 'q'가 없을 때 빈 queryset을 반환"""
+        filtered_queryset = super().filter_queryset(queryset)
+        if not self.request.query_params.get("q"):
+            return queryset.none()
+        return filtered_queryset
