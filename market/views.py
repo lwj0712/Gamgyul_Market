@@ -1,14 +1,17 @@
-from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from .models import Product, ProductImage, Review
 from .serializers import ProductListSerializer, ProductSerializer, ReviewSerializer
-from django.db.models import Avg
+from config.pagination import LimitOffsetPagination, PageNumberPagination
+from django.db.models import Avg, Q
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,
@@ -30,7 +33,15 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 @extend_schema(
     summary="상품 목록 조회",
-    description="모든 상품의 목록을 반환합니다.",
+    description="모든 상품의 목록을 반환합니다. 검색 기능을 사용하여 특정 상품을 찾을 수 있습니다.",
+    parameters=[
+        OpenApiParameter(
+            name="search",
+            type=OpenApiTypes.STR,
+            description="상품 이름, 작성자, 품종, 재배 지역으로 검색 (선택사항)",
+            required=False,
+        ),
+    ],
     responses={
         200: OpenApiResponse(
             ProductListSerializer(many=True), description="목록 조회 성공"
@@ -39,34 +50,60 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     examples=[
         OpenApiExample(
             "상품 목록 결과 예시",
-            summary="상품 등록 요청 예시",
-            description="새로운 상품을 등록하는 요청 예시입니다.",
+            summary="상품 목록 조회 결과 예시",
+            description="상품 목록 조회 결과의 예시입니다.",
             value=[
                 {
                     "id": 1,
-                    "name": "product 1",
+                    "name": "유기농 사과",
                     "price": "10000.00",
                     "user": "user1",
                     "stock": 100,
-                    "average_rating": 5,
+                    "average_rating": 4.5,
                 },
                 {
                     "id": 2,
-                    "name": "product 2",
-                    "price": "500.00",
+                    "name": "제주 감귤",
+                    "price": "5000.00",
                     "user": "user2",
                     "stock": 500,
-                    "average_rating": 3,
+                    "average_rating": 4.8,
                 },
             ],
             response_only=True,
             status_codes=["200"],
-        )
+        ),
+        OpenApiExample(
+            "검색 결과 예시",
+            summary="검색 결과 예시",
+            description="'사과'로 검색한 결과의 예시입니다.",
+            value=[
+                {
+                    "id": 1,
+                    "name": "유기농 사과",
+                    "price": "10000.00",
+                    "user": "user1",
+                    "stock": 100,
+                    "average_rating": 4.5,
+                },
+                {
+                    "id": 3,
+                    "name": "청송 사과",
+                    "price": "8000.00",
+                    "user": "user3",
+                    "stock": 200,
+                    "average_rating": 4.2,
+                },
+            ],
+            response_only=True,
+            status_codes=["200"],
+        ),
     ],
 )
 class ProductListView(generics.ListAPIView):
     """
     상품 목록을 보여주는 view
+    검색 기능 포함
     """
 
     queryset = Product.objects.annotate(average_rating=Avg("reviews__rating")).order_by(
@@ -75,13 +112,28 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductListSerializer
     renderer_classes = [JSONRenderer, TemplateHTMLRenderer]
     template_name = "market/product_list.html"
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ["name", "user__username", "variety", "growing_region"]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.query_params.get("search", None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query)
+                | Q(user__username__icontains=search_query)
+                | Q(variety__icontains=search_query)
+                | Q(growing_region__icontains=search_query)
+            )
+        return queryset
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if request.accepted_renderer.format == "html":
-            return Response({"products": queryset})
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+            context = {"products": self.paginate_queryset(queryset)}
+            return Response(context, template_name=self.template_name)
+        return super().list(request, *args, **kwargs)
 
 
 @extend_schema(

@@ -1,24 +1,27 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.urls import path
-from .views import (
-    PostList,
-    PostDetail,
-    PostCreate,
-    PostDelete,
-    CommentList,
-    CommentDetail,
-    CommentDelete,
-)
+from . import views
 
 app_name = "insta"
 
 urlpatterns = [
-    path("posts/", PostList.as_view(), name="post-list"),
-    path("posts/<int:pk>/", PostDetail.as_view(), name="post-detail"),
-    path("posts/create/", PostCreate.as_view(), name="post-create"),
-    path("posts/<int:pk>/delete/", PostDelete.as_view(), name="post-delete"),
-    path("posts/<int:post_id>/comments/", CommentList.as_view(), name="comment-list"),
-    path("comments/<int:pk>/", CommentDetail.as_view(), name="comment-detail"),
-    path("comments/<int:pk>/delete", CommentDelete.as_view(), name="comment-delete"),
+    path("posts/", views.PostListView.as_view(), name="insta_post_list"),
+    path("posts/<int:pk>/", views.PostDetailView.as_view(), name="insta_post_detail"),
+    path("posts/create/", views.PostCreateView.as_view(), name="insta_post_create"),
+    path(
+        "posts/<int:pk>/delete/",
+        views.PostDeleteView.as_view(),
+        name="insta_post_delete",
+    ),
+    path(
+        "posts/<int:post_id>/comments/",
+        views.CommentListCreateView.as_view(),
+        name="insta_comment_list_create",
+    ),
+    path(
+        "comments/<int:pk>/",
+        views.CommentDetailView.as_view(),
+        name="insta_comment_detail",
+    ),
+    path("posts/<int:post_id>/like/", views.LikeView.as_view(), name="insta_like"),
+    path("posts/search/", views.TagPostListView.as_view(), name="insta_tag_post_list"),
 ]

@@ -10,8 +10,8 @@ class PostImageInline(admin.TabularInline):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = ("user", "content", "location", "created_at", "updated_at")
-    search_fields = ("user__username", "content", "location")
-    list_filter = ("created_at",)
+    search_fields = ("user__username", "content", "location", "tags__name")
+    list_filter = ("created_at", "tags")
     inlines = [PostImageInline]
 
 
