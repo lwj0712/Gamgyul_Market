@@ -27,10 +27,9 @@
 
 ## 2. 개발 목표
 
-저희 감귤하우스 팀은 현대적이고 확장 가능한 SNS 및 사용자 간 직거래 플랫폼을 개발하는 것을 목표로 하고 있습니다. 이 프로젝트를 통해 최신 웹 개발 기술을 학습하고 실제 프로덕션 환경에서의 개발 경험을 쌓고자 합니다. 주요 개발 목표는 다음과 같습니다.
+저희 감귤하우스 팀은 현대적이고 확장 가능한 SNS 및 사용자 간 직거래 플랫폼을 개발하는 것을 목표로 하고 있습니다. 주요 개발 목표는 다음과 같습니다.
 
-<details>
-    <summary><h4>📌 개발 목표</h4></summary>
+<br>
 
 1. **Django Rest Framework(DRF)** 를 활용한 RESTful API 구현
    - 효율적이고 확장 가능한 백엔드 설계
@@ -70,9 +69,7 @@
 
 <br>
 
-이 프로젝트를 통해 저희 팀은 현대적인 웹 개발 기술 스택을 종합적으로 활용하며, 실무에서 발생할 수 있는 다양한 기술적 도전과제를 해결하는 경험을 쌓을 것입니다. 이를 통해 팀원 각자의 기술적 역량을 향상시키는 동시에, 효과적인 의사소통, 작업 분배, 코드 리뷰 등 개발 과정에서 발생하는 팀원 간의 상호작용을 원활히 관리하고 조율하는 능력도 함께 키우는 것이 목표입니다.
-
-</details>
+이 프로젝트를 통해 저희 팀은 현대적인 웹 개발 기술 스택을 종합적으로 활용하며, 실무에서 발생할 수 있는 다양한 기술적 도전과제를 해결하는 경험을 쌓을 것입니다. 이를 통해 팀원 각자의 기술적 역량을 향상시키는 동시에, 효과적인 의사소통, 작업 분배, 코드 리뷰 등 개발 과정에서 발생하는 팀원 간의 상호작용을 원활히 관리하고 조율하는 능력도 함께 키우고자 합니다.
 
 <br>
 
@@ -152,6 +149,8 @@ id: admin
 pw: 1234
 ```
 
+<br>
+
 ## 5. API 문서 및 URL 구조
 
 ### 5.1 API 문서
@@ -175,8 +174,8 @@ pw: 1234
 | request-reactivation/ | POST | 계정 재활성화 요청 | ✅ |  |  |
 | activate/\<uidb64\>/\<token\>/ | GET | 계정 활성화 |  |  |  |
 | profile/\<str:username\>/ | GET | 유저 프로필 조회 |  |  |  |
-| profile/ | PATCH | 유저 프로필 수정 | ✅ | ✅ |  |
-| privacy-settings/ | GET | 개인정보 설정 조회 | ✅ | ✅ |  |
+| profile/ | PATCH | 유저 프로필 수정 | ✅ |  |  |
+| privacy-settings/ | GET | 개인정보 설정 조회 | ✅ |  |  |
 | follow/\<int:pk\>/ | POST | 사용자 팔로우 | ✅ |  |  |
 | unfollow/\<int:pk\>/ | POST | 사용자 언팔로우 | ✅ |  |  |
 | search/ | GET | 유저 프로필 검색 | ✅ |  |  |
@@ -190,7 +189,7 @@ pw: 1234
 | app: alarm | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
 | alarms/ | GET | 현재 로그인한 사용자의 알림 목록 조회 | ✅ |  |  |
-| alarms/\<int:alarm_id\>/ | DELETE | 특정 알림 삭제 | ✅ | ✅ | 해당 알림의 수신자여야 함 |
+| alarms/\<int:alarm_id\>/ | DELETE | 특정 알림 삭제 | ✅ |  | 해당 알림의 수신자여야 함 |
 | alarms/bulk-delete/ | DELETE | 모든 알림 삭제 | ✅ |  | 해당 알림의 수신자여야 함 |
 
 </details>
@@ -203,7 +202,7 @@ pw: 1234
 | / | GET | 현재 사용자가 속한 채팅방 목록 조회 | ✅ |  |  |
 | /create/ | POST | 1대1 채팅방 생성 | ✅ |  |  |
 | /\<uuid:room_id\>/ | GET | 특정 채팅방 정보 조회 | ✅ |  | 해당 채팅방 참여자여야 함 |
-| /\<uuid:room_id\>/leave/ | DELETE | 채팅방 나가기 | ✅ | ✅ | 해당 채팅방 참여자여야 함 |
+| /\<uuid:room_id\>/leave/ | DELETE | 채팅방 나가기 | ✅ |  | 해당 채팅방 참여자여야 함 |
 | /\<uuid:room_id\>/messages/ | GET | 채팅방 내 메시지 목록 조회 | ✅ |  | 해당 채팅방 참여자여야 함 |
 | /\<uuid:room_id\>/messages/send/ | POST | 메시지 생성 | ✅ |  | 해당 채팅방 참여자여야 함 |
 | /\<uuid:room_id\>/messages/search/ | GET | 메시지 검색 | ✅ |  | 해당 채팅방 참여자여야 함 |
@@ -220,7 +219,7 @@ pw: 1234
 | /posts/create/ | POST | 게시글 작성 | ✅ |  |  |
 | /posts/\<int:pk\>/delete/ | DELETE | 게시글 삭제 | ✅ | ✅ |  |
 | /posts/\<int:post_id\>/comments/ | GET, POST | 게시글에 댓글 목록 조회 및 댓글 작성 | ✅ |  |  |
-| /comments/\<int:pk\>/ | GET | 댓글 상세 조회 | ✅ | ✅ |  |
+| /comments/\<int:pk\>/ | GET | 댓글 상세 조회 | ✅ |  |  |
 | /posts/\<int:post_id\>/like/ | POST | 게시글 좋아요 | ✅ |  |  |
 | /posts/search/ | GET | 태그로 게시글 검색 |  |  |  |
 
@@ -254,6 +253,108 @@ pw: 1234
 ## 6. 프로젝트 구조와 개발 일정
 
 ### 6.1 프로젝트 구조
+
+<details>
+    <summary><h4>BE</h4></summary>
+
+```
+📦BE
+ ┣ 📂accounts
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📂tests
+ ┃ ┃ ┣ 📜test_views_account.py
+ ┃ ┃ ┣ 📜test_views_profile.py
+ ┃ ┃ ┗ 📜test_views_recommendation.py
+ ┃ ┣ 📂views
+ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┣ 📜account.py
+ ┃ ┃ ┣ 📜profile.py
+ ┃ ┃ ┗ 📜recommendation.py 
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜auth_backends.py
+ ┃ ┣ 📜filters.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┗ 📜urls.py
+ ┣ 📂alarm
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜comsumers.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┣ 📜signals.py
+ ┃ ┣ 📜tests.py
+ ┃ ┣ 📜urls.py
+ ┃ ┣ 📜views.py
+ ┣ 📂chat
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜comsumers.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜routing.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┣ 📜tests.py
+ ┃ ┣ 📜urls.py
+ ┃ ┣ 📜views.py
+ ┣ 📂config
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜asgi.py
+ ┃ ┣ 📜pagination.py
+ ┃ ┣ 📜settings.py
+ ┃ ┣ 📜urls.py
+ ┃ ┗ 📜wsgi.py
+ ┣ 📂insta
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜filters.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┣ 📜tests.py
+ ┃ ┣ 📜urls.py
+ ┃ ┗ 📜views.py
+ ┣ 📂market
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┣ 📜tests.py
+ ┃ ┣ 📜urls.py
+ ┃ ┗ 📜views.py
+ ┣ 📂report
+ ┃ ┣ 📂migrations
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜admin.py
+ ┃ ┣ 📜apps.py
+ ┃ ┣ 📜models.py
+ ┃ ┣ 📜serializers.py
+ ┃ ┣ 📜tests.py
+ ┃ ┣ 📜urls.py
+ ┃ ┗ 📜views.py
+ ┣ 📜.gitignore
+ ┣ 📜README.md
+ ┣ 📜docker-compose.yml
+ ┣ 📜manage.py
+ ┗ 📜requirements.txt
+```
+</details>
+
+<details>
+    <summary><h4>FE</h4></summary>
+
+```
+
+```
+</details>
 
 <br>
 
@@ -297,13 +398,12 @@ gantt
 ## 7. ERD
 <img src="static/images/readme_img/감귤마켓ERD.png" width="100%"/>
 
-<details>
-    <summary><h4>📌 관계도 해설</h4></summary>
+<h4>관계도 해설</h4>
 
 1. 사용자 관리:
-    - User 테이블이 중심이 되며, 사용자의 기본 정보를 저장합니다.
+    - User 테이블이 중심이 되어 사용자의 기본 정보를 저장합니다.
     - SocialAccount 테이블은 소셜 로그인 기능을 지원합니다.
-    - PrivacySettings 테이블로 각 사용자의 개인정보 공개 설정을 관리합니다.
+    - PrivacySettings 테이블로 사용자의 개인정보 공개 설정을 관리합니다.
     - Follow 테이블로 사용자 간의 팔로우 관계를 표현합니다.
 
 2. SNS 기능:
@@ -318,7 +418,7 @@ gantt
         - 채팅방에 연결되어 있는 상태라면 메시지 알림을 보내지 않습니다.
 
 4. 알림 시스템:
-    - 새로운 메시지에 대한 알림
+    - 새로운 메시지에 대한 알림을 생성합니다.
     - 다른 사용자가 나를 팔로우 했을 때 알림
     - 내 게시물에 댓글이 달렸을 때 알림
     - 내 게시물에 좋아요가 달렸을 때 알림
@@ -326,7 +426,7 @@ gantt
 5. Market 기능:
     - Product 테이블은 판매 상품 정보를 저장합니다.
     - ProductImage 테이블로 상품 이미지를 관리합니다.
-    - Review 테이블은 상품 리뷰를 저장합니다.
+    - Review 테이블은 상품에 대한 리뷰를 저장합니다.
 
 6. 신고 시스템:
     - Report 테이블로 부적절한 컨텐츠 신고를 관리합니다.
@@ -340,13 +440,15 @@ gantt
 - 상품(Product)은 여러 이미지(ProductImage)와 리뷰(Review)를 가질 수 있습니다.
 - 사용자들은 서로 팔로우할 수 있고(Follow), 채팅방(ChatRoom)에 참여하여 메시지(Message)를 주고받을 수 있습니다.
 
-</details>
-
 <br>
 
 ## 8. 시연 영상
 
+<br>
+
 ## 9. 트러블 슈팅
+
+<br>
 
 ## 10. 🤙 컨벤션
 
