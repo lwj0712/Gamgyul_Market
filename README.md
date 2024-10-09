@@ -41,31 +41,34 @@
 
 3. **JWT(JSON Web Token)** 를 이용한 사용자 인증 시스템 구축
    - 안전하고 확장 가능한 사용자 인증 메커니즘 개발
-   - 토큰 기반 인증의 장단점 이해
+   - 토큰 기반 인증과 세션 기반 인증의 장단점 이해
 
 4. **Class-Based Views(CBV)** 를 통한 CRUD 기능 구현
    - 재사용 가능하고 유지보수가 용이한 view 로직 설계
    - DRF의 generic views 활용 숙달
 
-5. **AWS** 를 통한 클라우드 배포
-   - 클라우드 인프라 구축 및 관리 경험 습득
-   - CI/CD 파이프라인 구축을 통한 자동화된 배포 프로세스 확립
-
-6. **Docker** 를 활용한 일관된 개발 및 운영 환경 구축
-   - 컨테이너화된 애플리케이션 개발 및 배포 프로세스 학습
-
-7. **Redis** 를 통한 효율적인 메모리 관리
-   - 캐싱 전략 수립 및 구현
-   - 실시간 데이터 처리 최적화
-
-8. **팀 협업 경험 축적**
-   - 모든 팀원이 처음으로 경험하는 협업 프로젝트
+5. **팀 협업 경험 축적**
    - Git을 활용한 버전, 브랜치 관리 및 협업 워크플로우 확립
    - 팀원끼리 부담없이 물어보고 도와주는 협업 문화 형성
 
-9. 확장 가능한 **데이터베이스** 설계
+6. **AWS** 를 통한 클라우드 배포
+   - 클라우드 인프라 구축 및 관리 경험 습득
+   - CI/CD 파이프라인 구축을 통한 자동화된 배포 프로세스 확립
+
+7. **Docker** 를 활용한 일관된 개발 및 운영 환경 구축
+   - 컨테이너화된 애플리케이션 개발 및 배포 프로세스 학습
+
+8. **Redis** 를 통한 효율적인 메모리 관리 및 실시간 기능 구현
+   - 실시간 데이터 처리 최적화
+   - 채팅 기능을 위한 메시지 브로커로 Redis 활용
+   - 사용자 접속 상태 관리 및 실시간 알림 기능 구현
+  
+9. **Daphne**를 활용한 ASGI 서버 구현
+   - Django Channels와 Daphne를 이용한 WebSocket 연결 관리
+   - 비동기 처리를 통한 고성능 실시간 통신 구현
+
+10. 확장 가능한 **데이터베이스** 설계
    - 복잡한 관계를 가진 데이터 모델 설계 및 구현
-   - 데이터베이스 성능 최적화 및 인덱싱 전략 수립
 
 <br>
 
@@ -168,16 +171,16 @@ pw: 1234
 | signup/ | POST | 회원가입 |  |  |  |
 | login/ | POST | 로그인 |  |  |  |
 | logout/ | POST | 로그아웃 | ✅ |  |  |
-| change-password/ | POST | 비밀번호 변경 | ✅ |  |  |
-| deactivate/ | POST | 계정 비활성화 | ✅ |  |  |
-| delete/ | DELETE | 계정 삭제 | ✅ |  |  |
-| request-reactivation/ | POST | 계정 재활성화 요청 | ✅ |  |  |
-| activate/\<uidb64\>/\<token\>/ | GET | 계정 활성화 |  |  |  |
-| profile/\<str:username\>/ | GET | 유저 프로필 조회 |  |  |  |
-| profile/ | PATCH | 유저 프로필 수정 | ✅ |  |  |
-| privacy-settings/ | GET | 개인정보 설정 조회 | ✅ |  |  |
+| change-password/ | PUT | 비밀번호 변경 | ✅ | ✅ |  |
+| deactivate/ | POST | 계정 비활성화 | ✅ | ✅ |  |
+| delete/ | POST | 계정 삭제 | ✅ | ✅ |  |
+| request-reactivation/ | POST | 계정 재활성화 요청 |  |  |  |
+| activate/\<uidb64\>/\<token\>/ | GET | 계정 활성화 |  |  | 유효한 토큰 |
+| profile/\<str:username\>/ | GET | 유저 프로필 조회 | ✅ |  |  |
+| profile/ | PUT, PATCH | 유저 프로필 수정 | ✅ | ✅ |  |
+| privacy-settings/ | GET, PUT, PATCH | 개인정보 설정 조회 | ✅ | ✅ |  |
 | follow/\<int:pk\>/ | POST | 사용자 팔로우 | ✅ |  |  |
-| unfollow/\<int:pk\>/ | POST | 사용자 언팔로우 | ✅ |  |  |
+| unfollow/\<int:pk\>/ | DELETE | 사용자 언팔로우 | ✅ |  |  |
 | search/ | GET | 유저 프로필 검색 | ✅ |  |  |
 | recommend/ | GET | 친구 추천 | ✅ |  |  |
 
