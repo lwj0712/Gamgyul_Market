@@ -1,4 +1,3 @@
-from django.db.models import Count
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated

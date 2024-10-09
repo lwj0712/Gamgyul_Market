@@ -116,7 +116,7 @@ class PostListView(generics.ListAPIView):
 
         if user.is_authenticated:
             following_users = Follow.objects.filter(follower=user).values_list(
-                "followed_user", flat=True
+                "following", flat=True
             )
 
             if following_users.exists():
