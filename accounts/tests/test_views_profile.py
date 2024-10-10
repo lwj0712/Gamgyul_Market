@@ -84,7 +84,9 @@ class PrivacySettingsViewTestCase(APITransactionTestCase):
             password="testpassword123",
         )
         self.client.force_authenticate(user=self.user)
-        self.url = reverse("accounts:privacy_settings")
+        self.url = reverse(
+            "accounts:privacy_settings", kwargs={"username": self.user.username}
+        )
 
     def test_privacy_settings_get(self):
         """프로필 보호 설정 조회 테스트"""
@@ -134,8 +136,15 @@ class PrivacySettingsViewTestCase(APITransactionTestCase):
     def test_privacy_settings_unauthenticated(self):
         """인증되지 않은 사용자 접근 테스트"""
         self.client.force_authenticate(user=None)
-        response = self.client.get(self.url)
+        url = reverse("accounts:privacy_settings", kwargs={"username": "testuser"})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_privacy_settings_nonexistent_user(self):
+        """존재하지 않는 사용자의 프로필 보호 설정 접근 테스트"""
+        url = reverse("accounts:privacy_settings", kwargs={"username": "nonexistent"})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_privacy_settings_nonexistent(self):
         """프로필 보호 설정이 없는 경우 테스트"""
