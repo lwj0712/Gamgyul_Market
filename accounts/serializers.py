@@ -183,11 +183,13 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_followers(self, obj):
-        return FollowSerializer(Follow.objects.filter(following=obj), many=True).data
+        followers = Follow.objects.filter(following=obj).exclude(follower=obj)
+        return FollowSerializer(followers, many=True).data
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_following(self, obj):
-        return FollowSerializer(Follow.objects.filter(follower=obj), many=True).data
+        following = Follow.objects.filter(follower=obj).exclude(following=obj)
+        return FollowSerializer(following, many=True).data
 
     @extend_schema_field(OpenApiTypes.INT)
     def get_followers_count(self, obj):

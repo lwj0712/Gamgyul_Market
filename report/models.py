@@ -28,10 +28,10 @@ class Report(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     reported_content = GenericForeignKey("content_type", "object_id")
-    reason = models.CharField(max_length=20, choices=REPORT_REASONS)
+    reason = models.CharField(choices=REPORT_REASONS)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=REPORT_STATUS, default="pending")
+    status = models.CharField(choices=REPORT_STATUS, default="pending")
     admin_comment = models.TextField(blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 

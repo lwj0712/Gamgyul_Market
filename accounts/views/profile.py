@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
 from django.core.exceptions import PermissionDenied
 from rest_framework import generics, status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -368,40 +367,53 @@ class FollowView(generics.CreateAPIView):
             )
 
 
-class UnfollowView(APIView):
-    permission_classes = [IsAuthenticated]
+@extend_schema(
+    summary="언팔로우",
+    description="특정 사용자를 언팔로우합니다.",
+    parameters=[
+        OpenApiParameter(
+            name="pk", description="언팔로우할 사용자의 ID", required=True, type=int
+        ),
+    ],
+    responses={
+        status.HTTP_200_OK: OpenApiResponse(
+            response=ProfileSerializer,
+            description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
+        ),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+            description="팔로우한 사용자를 찾을 수 없음"
+        ),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+            description="이미 팔로우하지 않은 사용자"
+        ),
+    },
+    tags=["profile"],
+)
+class UnfollowView(generics.DestroyAPIView):
+    queryset = Follow.objects.all()
 
-    @extend_schema(
-        summary="언팔로우",
-        description="특정 사용자를 언팔로우합니다.",
-        parameters=[
-            OpenApiParameter(
-                name="pk", description="언팔로우할 사용자의 ID", required=True, type=int
-            ),
-        ],
-        responses={
-            status.HTTP_200_OK: OpenApiResponse(
-                response=ProfileSerializer,
-                description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
-            ),
-            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-                description="팔로우한 사용자를 찾을 수 없음"
-            ),
-            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-                description="이미 팔로우하지 않은 사용자"
-            ),
-        },
-        tags=["profile"],
-    )
-    def post(self, request, pk):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        팔로우 관계가 있는 유저의 id 값 저장 후
+        id 값으로 팔로워를 찾고 삭제
+        유저, 팔로우 관계 예외처리
+        """
+        following_id = self.kwargs["pk"]
+
         try:
-            following_user = User.objects.get(id=pk)
-            follow = Follow.objects.get(follower=request.user, following=following_user)
+            following_user = User.objects.get(id=following_id)
+            follow = Follow.objects.get(
+                follower=self.request.user, following=following_user
+            )
             follow.delete()
-            profile_serializer = ProfileSerializer(
+            profile_serializer = self.get_serializer(
                 following_user, context={"request": request}
             )
             return Response(profile_serializer.data)
+
         except User.DoesNotExist:
             return Response(
                 {"detail": "언팔로우할 유저가 존재하지 않습니다."},

@@ -274,13 +274,13 @@ class ProfileSearchViewTestCase(APITransactionTestCase):
     def test_profile_search(self):
         """
         프로필 검색 테스트
-        두 명의 사용자가 검색되어야 함
+        한 명의 사용자가 검색되어야 함(본인 제외)
         """
         url = reverse("accounts:profile_search")
         response = self.client.get(url, {"q": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         print(f"Response data: {response.data}")
-        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["count"], 1)
 
     def test_profile_search_no_query(self):
         """쿼리가 없는 경우 빈 결과 반환 테스트"""
