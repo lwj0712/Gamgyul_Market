@@ -33,7 +33,7 @@ urlpatterns = [
     ),
     path("profile/", profile.ProfileUpdateView.as_view(), name="profile_update"),
     path(
-        "privacy-settings/",
+        "privacy-settings/<str:username>/",
         profile.PrivacySettingsView.as_view(),
         name="privacy_settings",
     ),

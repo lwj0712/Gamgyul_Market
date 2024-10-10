@@ -6,7 +6,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from allauth.socialaccount.models import SocialAccount
 from market.models import Product
-from .models import PrivacySettings
+from market.serializers import ProductSerializer
+from .models import PrivacySettings, Follow
 
 User = get_user_model()
 
@@ -129,32 +130,15 @@ class FollowSerializer(serializers.ModelSerializer):
     팔로우 serializer
     """
 
-    id = serializers.CharField(read_only=True)
-    username = serializers.CharField(read_only=True)
-    profile_image = serializers.ImageField(read_only=True)
+    id = serializers.CharField(source="following.id", read_only=True)
+    username = serializers.CharField(source="following.username", read_only=True)
+    profile_image = serializers.ImageField(
+        source="following.profile_image", read_only=True
+    )
 
     class Meta:
-        model = User
+        model = Follow
         fields = ("id", "username", "profile_image")
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    """
-    Product 정보 불러오기
-    """
-
-    class Meta:
-        model = Product
-        fields = (
-            "user",
-            "name",
-            "price",
-            "description",
-            "stock",
-            "variety",
-            "growing_region",
-            "harvest_date",
-        )
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -169,6 +153,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
+    is_self = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -183,15 +168,26 @@ class ProfileSerializer(serializers.ModelSerializer):
             "followers_count",
             "following_count",
             "products",
+            "is_self",
         )
+
+    def get_is_self(self, obj):
+        """
+        프로필 수정 시 자신과 구분하는 메서드
+        업데이트 시 자신과 구분
+        """
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return obj == request.user
+        return False
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_followers(self, obj):
-        return FollowSerializer(obj.followers.all(), many=True).data
+        return FollowSerializer(Follow.objects.filter(following=obj), many=True).data
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_following(self, obj):
-        return FollowSerializer(obj.following.all(), many=True).data
+        return FollowSerializer(Follow.objects.filter(follower=obj), many=True).data
 
     @extend_schema_field(OpenApiTypes.INT)
     def get_followers_count(self, obj):
@@ -204,7 +200,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     @extend_schema_field(ProductSerializer(many=True))
     def get_products(self, obj):
         products = Product.objects.filter(user=obj)
-        return ProductSerializer(products, many=True).data
+        return ProductSerializer(products, many=True, context=self.context).data
 
     def get_viewer_type(self, viewer, profile_owner):
         """
