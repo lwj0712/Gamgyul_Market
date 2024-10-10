@@ -8,6 +8,7 @@ urlpatterns = [
     path("signup/", account.SignUpView.as_view(), name="signup"),
     path("login/", account.LoginView.as_view(), name="login"),
     path("logout/", account.LogoutView.as_view(), name="logout"),
+    path("current-user/", account.CurrentUserView.as_view(), name="current_user"),
     path(
         "change-password/", account.PasswordChangeView.as_view(), name="change_password"
     ),
@@ -32,7 +33,7 @@ urlpatterns = [
     ),
     path("profile/", profile.ProfileUpdateView.as_view(), name="profile_update"),
     path(
-        "privacy-settings/",
+        "privacy-settings/<str:username>/",
         profile.PrivacySettingsView.as_view(),
         name="privacy_settings",
     ),

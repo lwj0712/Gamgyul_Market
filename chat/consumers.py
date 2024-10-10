@@ -8,10 +8,6 @@ User = get_user_model()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
-    """
-    채팅방에서 WebSocket 연결 및 메시지 수신/송신을 처리하는 Consumer
-    """
-
     async def connect(self):
         """
         클라이언트가 WebSocket에 연결할 때 호출
@@ -21,12 +17,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.room_group_name = f"chat_{self.room_id}"
 
-        # 사용자 인증 여부 확인
         if not self.scope["user"].is_authenticated:
             await self.close()
             return
 
-        # 채팅방 참여 여부 확인
         if await self.is_user_in_room(self.room_id, self.scope["user"]):
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
@@ -41,26 +35,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         """
-        클라이언트가 WebSocket 연결을 끊을 때 호출
-        - 그룹에서 사용자 제거
-        - WebSocketConnection 모델을 사용해 연결 종료 시간 기록
+        WebSocketConnection 모델을 사용해 연결 종료 시간 기록
         """
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        # WebSocket 연결 종료 시간 기록
         await self.mark_connection_as_disconnected(self.scope["user"], self.room_id)
 
     async def receive(self, text_data):
-        """
-        클라이언트로부터 메시지를 수신했을 때 호출
-        - 메시지를 그룹에 전송하여 다른 참여자에게 전달
-        - 메시지 ID가 포함된 경우 읽음 상태로 처리
-        """
         text_data_json = json.loads(text_data)
         message = text_data_json.get("message")
         message_id = text_data_json.get("message_id")
 
         if message:
-            # 메시지 전송 처리
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -71,7 +56,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 },
             )
 
-            # 메시지 읽음 처리
             await self.mark_messages_as_read(self.room_id, self.scope["user"])
 
         if message_id:
@@ -82,13 +66,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
     async def chat_message(self, event):
-        """
-        그룹으로부터 수신한 메시지를 클라이언트로 전송
-        """
         message = event.get("message", None)
         message_id = event.get("message_id", None)
 
-        # 클라이언트에게 메시지 전송
         await self.send(
             text_data=json.dumps(
                 {
@@ -101,7 +81,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def message_read(self, event):
         """
-        읽음 상태를 그룹으로부터 수신하여 클라이언트에 전송
+        읽음 상태를 클라이언트에 전송
         """
         message_id = event["message_id"]
         is_read = event["is_read"]

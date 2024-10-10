@@ -192,9 +192,10 @@ SIMPLE_JWT = {
 }
 
 # CORS 설정 (환경 변수에서 가져오도록 수정)
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
-if not CORS_ALLOW_ALL_ORIGINS:
-    CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
 
 # Crispy Forms 설정
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -249,3 +250,4 @@ IMAGEKIT_CACHEFILE_DIR = "CACHE/images"
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # 2주
+SESSION_COOKIE_SAMESITE = "Lax"

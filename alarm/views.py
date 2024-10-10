@@ -3,15 +3,11 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from .models import Alarm
-from .serializers import AlarmSerializer
+from alarm.models import Alarm
+from alarm.serializers import AlarmSerializer
 
 
 class AlarmListView(generics.ListAPIView):
-    """
-    현재 로그인한 사용자의 알림 목록을 반환
-    """
-
     serializer_class = AlarmSerializer
     permission_classes = [IsAuthenticated]
 
@@ -34,10 +30,6 @@ class AlarmListView(generics.ListAPIView):
 
 
 class AlarmDeleteView(generics.DestroyAPIView):
-    """
-    특정 알림을 삭제
-    """
-
     serializer_class = AlarmSerializer
     permission_classes = [IsAuthenticated]
 
@@ -71,10 +63,6 @@ class AlarmDeleteView(generics.DestroyAPIView):
 
 
 class AlarmBulkDeleteView(generics.DestroyAPIView):
-    """
-    사용자의 모든 알림을 삭제
-    """
-
     permission_classes = [IsAuthenticated]
 
     @extend_schema(

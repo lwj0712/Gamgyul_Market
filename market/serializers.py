@@ -35,6 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
     username = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
+    reviews = ReviewSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -52,6 +53,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
             "average_rating",
             "images",
+            "reviews",
         ]
         ref_name = "marketProductSerializer"
 

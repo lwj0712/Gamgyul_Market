@@ -7,15 +7,9 @@ User = get_user_model()
 
 
 class ChatRoom(models.Model):
-    """
-    사용자 간의 채팅방을 나타내는 모델
-    - UUID를 primary key로 사용
-    - 두 명의 사용자가 참가
-    """
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    participants = models.ManyToManyField(User, related_name="chat_rooms")
     name = models.CharField(max_length=255, blank=True)
+    participants = models.ManyToManyField(User, related_name="chat_rooms")
     room_key = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -25,16 +19,15 @@ class ChatRoom(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        채팅방 저장 시 이름 자동 생성
-        - 이름이 없고, 참여자가 두 명일 때 이름을 자동으로 생성
+        채팅방 이름이 없고, 참여자가 두 명일 때 이름을 자동으로 생성
         """
-        super().save(*args, **kwargs)  # 객체를 저장하여 채팅방 ID가 생성되도록
+        super().save(*args, **kwargs)
         if not self.name and self.participants.count() == 2:
             participant_names = ", ".join(
                 [user.username for user in self.participants.all()]
             )
             self.name = f"{participant_names}의 대화"
-            super().save(*args, **kwargs)  # 채팅방 이름이 설정된 후 다시 저장
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -42,9 +35,7 @@ class ChatRoom(models.Model):
 
 class Message(models.Model):
     """
-    채팅방 내에서 전송된 메시지를 나타내는 모델
-    - 텍스트 또는 이미지 메시지 가능
-    - 임시 이미지 저장 경로
+    임시 이미지 저장 경로
     """
 
     chat_room = models.ForeignKey(
@@ -66,7 +57,7 @@ class Message(models.Model):
 
 class WebSocketConnection(models.Model):
     """
-    WebSocket 연결 정보를 저장하는 모델
+    WebSocket 연결 정보를 저장
     """
 
     user = models.ForeignKey(
@@ -80,8 +71,5 @@ class WebSocketConnection(models.Model):
         return f"{self.user.username} in {self.chat_room} - connected at {self.connected_at}"
 
     def mark_disconnected(self):
-        """
-        WebSocket 연결 종료 시간을 기록
-        """
         self.disconnected_at = timezone.now()
         self.save()

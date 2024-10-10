@@ -1,12 +1,8 @@
 from rest_framework import serializers
-from .models import Alarm
+from alarm.models import Alarm
 
 
 class AlarmSerializer(serializers.ModelSerializer):
-    """
-    Alarm 모델을 직렬화하는 Serializer
-    """
-
     class Meta:
         model = Alarm
         fields = [

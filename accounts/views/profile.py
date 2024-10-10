@@ -1,8 +1,10 @@
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import PermissionDenied
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -80,6 +82,17 @@ class ProfileUpdateView(generics.UpdateAPIView):
         return self.request.user
 
     @extend_schema(
+        summary="사용자 프로필 조회",
+        description="현재 로그인한 사용자의 프로필 정보를 조회합니다.",
+        responses={200: ProfileUpdateSerializer},
+        tags=["profile"],
+    )
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @extend_schema(
         summary="사용자 프로필 전체 업데이트",
         description="현재 로그인한 사용자의 프로필 정보를 전체 업데이트합니다.",
         request=ProfileUpdateSerializer,
@@ -122,9 +135,18 @@ class ProfileUpdateView(generics.UpdateAPIView):
 
 
 class PrivacySettingsView(generics.RetrieveUpdateAPIView):
-
     serializer_class = PrivacySettingsSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        username = self.kwargs.get("username")
+        user = get_object_or_404(User, username=username)
+
+        # 현재 로그인한 사용자가 요청한 사용자와 같은지 확인
+        if self.request.user != user:
+            raise PermissionDenied("You don't have permission to access this settings.")
+
+        return PrivacySettings.objects.get_or_create(user=user)[0]
 
     @extend_schema(
         summary="프로필 보안 설정 조회",
@@ -132,6 +154,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         responses={
             status.HTTP_200_OK: PrivacySettingsSerializer,
             status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+            status.HTTP_403_FORBIDDEN: OpenApiTypes.OBJECT,
             status.HTTP_404_NOT_FOUND: OpenApiTypes.OBJECT,
         },
         tags=["profile"],
@@ -147,6 +170,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
             status.HTTP_200_OK: PrivacySettingsSerializer,
             status.HTTP_400_BAD_REQUEST: OpenApiTypes.OBJECT,
             status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+            status.HTTP_403_FORBIDDEN: OpenApiTypes.OBJECT,
             status.HTTP_404_NOT_FOUND: OpenApiTypes.OBJECT,
         },
         examples=[
@@ -175,7 +199,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         tags=["profile"],
     )
     def put(self, request, *args, **kwargs):
-        return super().put(request, *args, **kwargs)
+        return self.update(request, *args, **kwargs)
 
     @extend_schema(
         summary="프로필 보안 설정 부분 업데이트",
@@ -185,6 +209,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
             status.HTTP_200_OK: PrivacySettingsSerializer,
             status.HTTP_400_BAD_REQUEST: OpenApiTypes.OBJECT,
             status.HTTP_401_UNAUTHORIZED: OpenApiTypes.OBJECT,
+            status.HTTP_403_FORBIDDEN: OpenApiTypes.OBJECT,
             status.HTTP_404_NOT_FOUND: OpenApiTypes.OBJECT,
         },
         examples=[
@@ -201,16 +226,6 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
     )
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
-
-    def get_object(self):
-        """
-        get_or_create_object 메서드 삭제
-        객체가 존재하면 get, 없으면 create
-        """
-        try:
-            return PrivacySettings.objects.get(user=self.request.user)
-        except ObjectDoesNotExist:
-            return PrivacySettings.objects.create(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
         """
@@ -329,12 +344,12 @@ class FollowView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            Follow.objects.create(follower=request.user, following=following_user)
-
-            profile_serializer = ProfileSerializer(
-                following_user, context={"request": request}
+            follow = Follow.objects.create(
+                follower=request.user, following=following_user
             )
-            return Response(profile_serializer.data, status=status.HTTP_201_CREATED)
+
+            serializer = self.get_serializer(follow)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except User.DoesNotExist:
             return Response(
@@ -353,48 +368,37 @@ class FollowView(generics.CreateAPIView):
             )
 
 
-@extend_schema(
-    summary="언팔로우",
-    description="특정 사용자를 언팔로우합니다.",
-    parameters=[
-        OpenApiParameter(
-            name="pk", description="언팔로우할 사용자의 ID", required=True, type=int
-        ),
-    ],
-    responses={
-        status.HTTP_200_OK: OpenApiResponse(
-            response=ProfileSerializer,
-            description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
-        ),
-        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-            description="팔로우한 사용자를 찾을 수 없음"
-        ),
-        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-            description="이미 팔로우하지 않은 사용자"
-        ),
-    },
-    tags=["profile"],
-)
-class UnfollowView(generics.DestroyAPIView):
-
-    queryset = Follow.objects.all()
+class UnfollowView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ProfileSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        """
-        팔로우 관계가 있는 유저의 id 값 저장 후
-        id 값으로 팔로워를 찾고 삭제
-        유저, 팔로우 관계 예외처리
-        """
-        following_id = self.kwargs["pk"]
+    @extend_schema(
+        summary="언팔로우",
+        description="특정 사용자를 언팔로우합니다.",
+        parameters=[
+            OpenApiParameter(
+                name="pk", description="언팔로우할 사용자의 ID", required=True, type=int
+            ),
+        ],
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                response=ProfileSerializer,
+                description="언팔로우 성공 및 해당 사용자의 프로필 정보 반환",
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description="팔로우한 사용자를 찾을 수 없음"
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description="이미 팔로우하지 않은 사용자"
+            ),
+        },
+        tags=["profile"],
+    )
+    def post(self, request, pk):
         try:
-            following_user = User.objects.get(id=following_id)
-            follow = Follow.objects.get(
-                follower=self.request.user, following=following_user
-            )
+            following_user = User.objects.get(id=pk)
+            follow = Follow.objects.get(follower=request.user, following=following_user)
             follow.delete()
-            profile_serializer = self.get_serializer(
+            profile_serializer = ProfileSerializer(
                 following_user, context={"request": request}
             )
             return Response(profile_serializer.data)
