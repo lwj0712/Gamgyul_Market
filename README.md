@@ -161,10 +161,11 @@ pw: 1234
 - Swagger URL : http://localhost:8000/api/schema/swagger-ui/
 - Redoc URl : http://localhost:8000/api/schema/redoc/
 
+<br>
+
 ### 5.2 URL 구조
 
-<details>
-    <summary><h4>🔑 accounts</h4></summary>
+#### 🔑 accounts
 
 | app: accounts | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
@@ -184,10 +185,7 @@ pw: 1234
 | search/ | GET | 유저 프로필 검색 | ✅ |  |  |
 | recommend/ | GET | 친구 추천 | ✅ |  |  |
 
-</details>
-
-<details>
-    <summary><h4>📢 alarm</h4></summary>
+#### 📢 alarm
 
 | app: alarm | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
@@ -195,10 +193,7 @@ pw: 1234
 | alarms/\<int:alarm_id\>/ | DELETE | 특정 알림 삭제 | ✅ |  | 해당 알림의 수신자여야 함 |
 | alarms/bulk-delete/ | DELETE | 모든 알림 삭제 | ✅ |  | 해당 알림의 수신자여야 함 |
 
-</details>
-
-<details>
-    <summary><h4>🤝 chat</h4></summary>
+#### 🤝 chat
 
 | app: chat | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
@@ -210,10 +205,7 @@ pw: 1234
 | /\<uuid:room_id\>/messages/send/ | POST | 메시지 생성 | ✅ |  | 해당 채팅방 참여자여야 함 |
 | /\<uuid:room_id\>/messages/search/ | GET | 메시지 검색 | ✅ |  | 해당 채팅방 참여자여야 함 |
 
-</details>
-
-<details>
-    <summary><h4>📷 insta</h4></summary>
+#### 📷 insta
 
 | app: insta | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
@@ -226,10 +218,7 @@ pw: 1234
 | /posts/\<int:post_id\>/like/ | POST | 게시글 좋아요 | ✅ |  |  |
 | /posts/search/ | GET | 태그로 게시글 검색 |  |  |  |
 
-</details>
-
-<details>
-    <summary><h4>🛒 products</h4></summary>
+#### 🛒 products
 
 | app: products | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
@@ -240,16 +229,11 @@ pw: 1234
 | /products/\<int:id\>/delete/ | DELETE | 상품 삭제 | ✅ | ✅ |  |
 | /products/\<int:product_id\>/reviews/\<int:id\>/delete/ | DELETE | 상품 리뷰 삭제 | ✅ | ✅ |  |
 
-</details>
-
-<details>
-    <summary><h4>🚨 report</h4></summary>
+#### 🚨 report
 
 | app: report | HTTP Method | 설명 | 로그인 권한 필요 | 작성자 권한 필요 | 추가 권한 |
 | :-- | --- | --- | :-: | :-: | --- |
 | /create/ | POST | 신고 생성 | ✅ |  |  |
-
-</details>
 
 <br>
 
