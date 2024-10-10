@@ -7,10 +7,6 @@ User = get_user_model()
 
 
 class Alarm(models.Model):
-    """
-    알림을 저장하는 모델
-    """
-
     ALARM_TYPE_CHOICES = (
         ("message", "메시지"),
         ("follow", "팔로우"),
@@ -19,18 +15,14 @@ class Alarm(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recipient = models.ForeignKey(
-        User, related_name="alarms", on_delete=models.CASCADE
-    )  # 알림을 받는 사용자
+    recipient = models.ForeignKey(User, related_name="alarms", on_delete=models.CASCADE)
     sender = models.ForeignKey(
         User, related_name="sent_alarms", on_delete=models.CASCADE
-    )  # 알림을 발생시킨 사용자
+    )
     alarm_type = models.CharField(max_length=20, choices=ALARM_TYPE_CHOICES)
     message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    related_object_id = models.UUIDField(
-        null=True, blank=True
-    )  # 연관된 객체의 ID, 리디렉션 용
+    related_object_id = models.UUIDField(null=True, blank=True)  # 리디렉션 용
 
     class Meta:
         ordering = ["-created_at"]
@@ -39,9 +31,6 @@ class Alarm(models.Model):
         return f"{self.get_alarm_type_display()} - {self.recipient.username}에게"
 
     def get_redirect_url(self):
-        """
-        알림을 클릭했을 때, 해당 알림에 맞는 URL로 리디렉션
-        """
         if self.alarm_type == "message":
             # 메시지의 관련된 채팅방으로 이동 (예: 채팅방 상세 페이지)
             return reverse(

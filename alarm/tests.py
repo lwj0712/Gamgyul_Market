@@ -8,11 +8,11 @@ from asgiref.sync import sync_to_async
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
+from alarm.consumers import AlarmConsumer
+from accounts.models import Follow
 from alarm.models import Alarm
 from chat.models import ChatRoom, Message, WebSocketConnection
-from accounts.models import Follow
 from insta.models import Post, Comment, Like
-from .consumers import AlarmConsumer
 
 User = get_user_model()
 
