@@ -3,18 +3,14 @@ from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from accounts.models import Follow
-from .models import Alarm
+from alarm.models import Alarm
 from chat.models import Message, WebSocketConnection
 from insta.models import Comment, Like
 
 
 @receiver(post_save, sender=Alarm)
 def send_alarm_via_websocket(sender, instance, created, **kwargs):
-    """
-    알림이 생성될 때 WebSocket을 통해 실시간으로 알림을 전송하는 signal
-    """
     if created:
-        # WebSocket을 통해 실시간 알림 전송
         channel_layer = get_channel_layer()
         recipient_id = str(instance.recipient.id)
 
@@ -75,7 +71,6 @@ def create_alarm_for_new_follower(sender, instance, created, **kwargs):
     새로운 팔로우가 발생할 때 알림을 생성하는 신호
     """
     if created:
-        # 팔로우가 생성되었을 때 팔로우된 사람에게 알림 생성
         recipient = instance.following
         sender = instance.follower
 
@@ -94,9 +89,8 @@ def create_alarm_for_new_comment(sender, instance, created, **kwargs):
     새로운 댓글이 달렸을 때 알림을 생성하는 신호
     """
     if created:
-        # 댓글이 달린 게시물의 작성자에게 알림 생성
-        recipient = instance.post.user  # 게시물 작성자
-        sender = instance.user  # 댓글 작성자
+        recipient = instance.post.user
+        sender = instance.user
 
         Alarm.objects.create(
             recipient=recipient,
@@ -113,9 +107,8 @@ def create_alarm_for_new_like(sender, instance, created, **kwargs):
     좋아요가 눌렸을 때 알림을 생성하는 신호
     """
     if created:
-        # 좋아요가 달린 게시물의 작성자에게 알림 생성
-        recipient = instance.post.user  # 게시물 작성자
-        sender = instance.user  # 좋아요를 남긴 사용자
+        recipient = instance.post.user
+        sender = instance.user
 
         Alarm.objects.create(
             recipient=recipient,

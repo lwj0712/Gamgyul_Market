@@ -13,16 +13,12 @@ User = get_user_model()
 
 def get_chat_room_or_404(request, room_id):
     """
-    참여자로 로그인한 사용자와 room_id를 기준으로 채팅방을 가져오는 함수
+    로그인한 사용자와 room_id를 기준으로 채팅방을 가져오는 함수
     """
     return get_object_or_404(ChatRoom, id=room_id, participants=request.user)
 
 
 class ChatRoomListView(generics.ListAPIView):
-    """
-    현재 사용자가 속한 채팅방의 목록을 반환
-    """
-
     serializer_class = ChatRoomSerializer
     permission_classes = [IsAuthenticated]
 
@@ -43,10 +39,6 @@ class ChatRoomListView(generics.ListAPIView):
 
 
 class ChatRoomCreateView(generics.CreateAPIView):
-    """
-    요청한 사용자와 다른 1명의 사용자로 1대1 채팅방을 생성
-    """
-
     serializer_class = ChatRoomSerializer
     permission_classes = [IsAuthenticated]
     queryset = ChatRoom.objects.all()
@@ -101,11 +93,6 @@ class ChatRoomCreateView(generics.CreateAPIView):
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
-    """
-    요청한 사용자가 해당 채팅방의 참여자라면 채팅방을 가져옴
-    채팅방에 입장할 때 읽지 않은 메시지 읽음 처리
-    """
-
     serializer_class = ChatRoomSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "id"
@@ -145,12 +132,8 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
 
 
 class ChatRoomLeaveView(generics.DestroyAPIView):
-    """
-    요청한 사용자가 채팅방을 나가고, 남은 참여자가 없으면 채팅방 삭제
-    """
-
     permission_classes = [IsAuthenticated]
-    serializer_class = None  # DestroyAPIView에서는 명시적으로 None으로 설정해야함
+    serializer_class = None  # DestroyAPIView는 None으로 설정
 
     @extend_schema(
         summary="채팅방 나가기",
@@ -175,10 +158,6 @@ class ChatRoomLeaveView(generics.DestroyAPIView):
 
 
 class MessageListView(generics.ListAPIView):
-    """
-    요청한 사용자가 해당 채팅방의 참여자일 때만 메시지 목록 반환
-    """
-
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
@@ -208,10 +187,6 @@ class MessageListView(generics.ListAPIView):
 
 
 class MessageCreateView(generics.CreateAPIView):
-    """
-    메시지 생성 시 현재 사용자를 발신자로 설정
-    """
-
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
@@ -245,12 +220,6 @@ class MessageCreateView(generics.CreateAPIView):
 
 
 class MessageSearchView(generics.ListAPIView):
-    """
-    주어진 키워드를 포함하는 메시지를 검색
-    검색 결과가 없을 경우 빈 배열을 반환
-    검색 결과가 있을 경우 직렬화하여 응답 반환
-    """
-
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
