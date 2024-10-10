@@ -170,6 +170,11 @@ class FollowViewTestCase(APITransactionTestCase):
             email="testuser2@example.com",
             password="testpassword123",
         )
+        self.user3 = User.objects.create_user(
+            username="testuser3",
+            email="testuser3@example.com",
+            password="testpassword123",
+        )
         self.client.force_authenticate(user=self.user1)
 
     def test_follow_user(self):
@@ -204,6 +209,46 @@ class FollowViewTestCase(APITransactionTestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "이미 팔로우한 사용자입니다.")
+
+    def test_following_list(self):
+        """팔로잉 목록 조회 테스트"""
+        # user1이 user2와 user3을 팔로우
+        Follow.objects.create(follower=self.user1, following=self.user2)
+        Follow.objects.create(follower=self.user1, following=self.user3)
+
+        url = reverse(
+            "accounts:profile_detail", kwargs={"username": self.user1.username}
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print(response.data)
+        self.assertEqual(
+            len(response.data["following"]), 2
+        )  # user1은 2명의 유저를 팔로우
+        usernames = [user["username"] for user in response.data["following"]]
+        self.assertIn(self.user2.username, usernames)
+        self.assertIn(self.user3.username, usernames)
+
+    def test_followers_list(self):
+        """팔로워 목록 조회 테스트"""
+        # user2와 user3이 user1을 팔로우
+        Follow.objects.create(follower=self.user2, following=self.user1)
+        Follow.objects.create(follower=self.user3, following=self.user1)
+
+        url = reverse(
+            "accounts:profile_detail", kwargs={"username": self.user1.username}
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        print(response.data)
+        self.assertEqual(
+            len(response.data["followers"]), 2
+        )  # user1은 2명의 팔로워가 있음
+        usernames = [user["username"] for user in response.data["followers"]]
+        self.assertIn(self.user2.username, usernames)
+        self.assertIn(self.user3.username, usernames)
 
 
 class UnfollowViewTestCase(APITransactionTestCase):

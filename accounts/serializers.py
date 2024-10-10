@@ -130,14 +130,12 @@ class FollowSerializer(serializers.ModelSerializer):
     팔로우 serializer
     """
 
-    id = serializers.CharField(source="following.id", read_only=True)
-    username = serializers.CharField(source="following.username", read_only=True)
-    profile_image = serializers.ImageField(
-        source="following.profile_image", read_only=True
-    )
+    id = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    profile_image = serializers.ImageField(read_only=True)
 
     class Meta:
-        model = Follow
+        model = User
         fields = ("id", "username", "profile_image")
 
 
@@ -183,13 +181,17 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_followers(self, obj):
-        followers = Follow.objects.filter(following=obj).exclude(follower=obj)
-        return FollowSerializer(followers, many=True).data
+        followers = obj.followers.all().select_related("follower")
+        return FollowSerializer(
+            [follow.follower for follow in followers], many=True
+        ).data
 
     @extend_schema_field(FollowSerializer(many=True))
     def get_following(self, obj):
-        following = Follow.objects.filter(follower=obj).exclude(following=obj)
-        return FollowSerializer(following, many=True).data
+        following = obj.following.all().select_related("following")
+        return FollowSerializer(
+            [follow.following for follow in following], many=True
+        ).data
 
     @extend_schema_field(OpenApiTypes.INT)
     def get_followers_count(self, obj):
