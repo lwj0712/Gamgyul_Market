@@ -228,6 +228,11 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         return self.partial_update(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
+        """
+        프로필 보안 설정 업데이트
+        부분 업데이트와 전체 업데이트를 모두 지원
+        serializer 유효성 검사 후 업데이트
+        """
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -324,6 +329,12 @@ class FollowView(generics.CreateAPIView):
         return super().post(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
+        """
+        팔로우할 아이디 pk(id)값 불러오기
+        팔로우할 사용자가 존재하는지 확인
+        자기 자신을 팔로우하려는 경우 예외 처리 후 팔로우 관계 생성 시도
+        나머지(사용자를 못찾을 때, 이미 팔로우한 사람, 서버 오류) 예외 처리
+        """
         try:
             following_id = self.kwargs["pk"]
             following_user = User.objects.get(id=following_id)

@@ -350,7 +350,7 @@ class RequestReactivationView(APIView):
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = request.build_absolute_uri(
-            f"/activate-account?uidb64={uid}&token={token}"
+            reverse("accounts:activate_account", kwargs={"uidb64": uid, "token": token})
         )
         send_mail(
             "계정 재활성화",
