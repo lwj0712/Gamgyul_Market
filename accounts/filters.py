@@ -20,9 +20,13 @@ class ProfileFilter(filters.FilterSet):
     def filter_search(self, queryset, name, value):
         """value가 없을 때 빈 queryset을 반환"""
         if value:
-            return queryset.filter(
-                Q(username__icontains=value) | Q(email__icontains=value)
-            ).distinct()
+            return (
+                queryset.filter(
+                    Q(username__icontains=value) | Q(email__icontains=value)
+                )
+                .exclude(id=self.request.user.id)
+                .distinct()
+            )
         return queryset.none()
 
 
