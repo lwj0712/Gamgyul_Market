@@ -1,8 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from taggit.managers import TaggableManager
-from imagekit.models import ImageSpecField
-from imagekit.processors import ResizeToFill
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
 
 User = get_user_model()
 
@@ -11,7 +11,7 @@ class Post(models.Model):
     """게시물 모델"""
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
+    content = models.TextField(blank=False, null=False)
     location = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -28,10 +28,9 @@ class PostImage(models.Model):
     """게시물 이미지 모델"""
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="insta/")
-    image_1080 = ImageSpecField(
-        source="image",
-        processors=[ResizeToFill(1080, 1080)],
+    image = ProcessedImageField(
+        upload_to="insta/",
+        processors=[ResizeToFit(1920, 1080)],
         format="JPEG",
         options={"quality": 90},
     )

@@ -9,7 +9,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostImage
-        fields = ["id", "image_1080"]
+        fields = ["id", "image"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -56,15 +56,16 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
-    tags = TagListSerializerField()
-    images = PostImageSerializer(many=True, read_only=True)
-    uploaded_images = serializers.ListField(
+    tags = TagListSerializerField(required=False)
+    uploaded_images = PostImageSerializer(many=True, read_only=True)
+    images = serializers.ListField(
         child=serializers.ImageField(
             max_length=255, allow_empty_file=False, use_url=False
         ),
         write_only=True,
-        required=False,
+        required=True,
     )
+    content = serializers.CharField(required=True)
 
     class Meta:
         model = Post
@@ -76,8 +77,8 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "tags",
-            "images",
             "uploaded_images",
+            "images",
             "likes_count",
             "comments",
         ]
@@ -96,20 +97,20 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     def create(self, validated_data):
         """게시물 생성 로직"""
         tags_data = validated_data.pop("tags", None)
-        uploaded_images = validated_data.pop("uploaded_images", [])
+        images_data = validated_data.pop("images")
 
         request = self.context.get("request")
         validated_data["user"] = request.user
 
-        if not uploaded_images:
+        if not images_data:
             raise serializers.ValidationError("이미지는 필수입니다.")
-        if len(uploaded_images) > 10:
+        if len(images_data) > 10:
             raise serializers.ValidationError("이미지는 10개까지 첨부할 수 있습니다.")
 
         post = Post.objects.create(**validated_data)
 
         """이미지 저장"""
-        for image_data in uploaded_images:
+        for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
 
         """태그 추가"""
@@ -121,7 +122,6 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """게시물 수정 로직"""
         tags_data = validated_data.pop("tags", None)
-        uploaded_images = validated_data.pop("uploaded_images", [])
 
         instance.content = validated_data.get("content", instance.content)
         instance.location = validated_data.get("location", instance.location)
@@ -132,14 +132,14 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
             instance.tags.set(tags_data)
 
         """이미지 수정"""
-        if uploaded_images:
-            current_image_count = instance.images.count()
-            if len(uploaded_images) + current_image_count > 10:
+        if validated_data.get("images"):
+            current_image_count = instance.uploaded_images.count()
+            if len(validated_data["images"]) + current_image_count > 10:
                 raise serializers.ValidationError(
                     "이미지는 10개까지 첨부할 수 있습니다."
                 )
 
-            for image_data in uploaded_images:
+            for image_data in validated_data["images"]:
                 PostImage.objects.create(post=instance, image=image_data)
 
         return instance
