@@ -9,7 +9,10 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+
+if not SECRET_KEY:
+    raise ValueError("The SECRET_KEY setting must not be empty.")
 
 # DEBUG를 환경 변수에서 가져옴 (기본값은 False)
 DEBUG = os.getenv("DEBUG", "False") == "True"
