@@ -201,7 +201,7 @@ class ProductCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             product = serializer.save(user=self.request.user)
-            images = request.FILES.getlist("image")
+            images = request.FILES.getlist("images")
 
             if len(images) > 5:
                 return Response(
