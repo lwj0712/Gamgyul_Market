@@ -5,8 +5,8 @@ from .models import Report
 
 
 class ReportCreateSerializer(serializers.ModelSerializer):
-    content_type = serializers.CharField()
-    object_id = serializers.IntegerField()
+    content_type = serializers.CharField(read_only=True)
+    object_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Report
