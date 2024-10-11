@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.core.files.storage import default_storage
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,6 +20,7 @@ from drf_spectacular.utils import (
     OpenApiExample,
     OpenApiResponse,
 )
+from urllib.parse import urlparse
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -401,9 +404,48 @@ class ProductUpdateView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         product = serializer.save()
-        images = self.request.FILES.getlist("image")
-        for image in images:
+
+        images_to_delete = self.request.data.getlist("images_to_delete", [])
+
+        for full_image_url in images_to_delete:
+            try:
+                parsed_url = urlparse(full_image_url)
+                relative_path = parsed_url.path
+                if relative_path.startswith(settings.MEDIA_URL):
+                    relative_path = relative_path[len(settings.MEDIA_URL) :]
+
+                image = ProductImage.objects.get(image=relative_path, product=product)
+
+                if default_storage.exists(relative_path):
+                    default_storage.delete(relative_path)
+                    print(f"Deleted file: {relative_path}")
+                else:
+                    print(f"File not found in storage: {relative_path}")
+
+                image.delete()
+                print(f"Deleted image record for URL: {full_image_url}")
+            except ProductImage.DoesNotExist:
+                print(f"Image record not found for path: {relative_path}")
+            except Exception as e:
+                print(f"Error deleting image with URL {full_image_url}: {str(e)}")
+
+        new_images = self.request.FILES.getlist("image")
+        for image in new_images:
             ProductImage.objects.create(product=product, image=image)
+
+        return product
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 
 @extend_schema(
