@@ -9,7 +9,6 @@ from market.models import Product
 from market.serializers import ProductSerializer
 from .models import PrivacySettings, Follow
 from insta.models import Post
-from insta.serializers import PostSerializer
 
 User = get_user_model()
 
@@ -210,8 +209,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True, context=self.context).data
 
-    @extend_schema_field(PostSerializer(many=True))
+    @extend_schema_field(serializers.ListSerializer(child=serializers.DictField()))
     def get_posts(self, obj):
+        from insta.serializers import PostSerializer
+
         posts = Post.objects.filter(user=obj)
         return PostSerializer(posts, many=True, context=self.context).data
 
