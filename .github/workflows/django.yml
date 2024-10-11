@@ -29,5 +29,4 @@ jobs:
       env:
         DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       run: |
-        export DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
         python manage.py test
