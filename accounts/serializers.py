@@ -8,6 +8,8 @@ from allauth.socialaccount.models import SocialAccount
 from market.models import Product
 from market.serializers import ProductSerializer
 from .models import PrivacySettings, Follow
+from insta.models import Post
+from insta.serializers import PostSerializer
 
 User = get_user_model()
 
@@ -151,6 +153,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     followers_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
+    posts = serializers.SerializerMethodField()
     is_self = serializers.SerializerMethodField()
 
     class Meta:
@@ -166,6 +169,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "followers_count",
             "following_count",
             "products",
+            "posts",
             "is_self",
         )
 
@@ -206,6 +210,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         products = Product.objects.filter(user=obj)
         return ProductSerializer(products, many=True, context=self.context).data
 
+    @extend_schema_field(PostSerializer(many=True))
+    def get_posts(self, obj):
+        posts = Post.objects.filter(user=obj)
+        return PostSerializer(posts, many=True, context=self.context).data
+
     def get_viewer_type(self, viewer, profile_owner):
         """
         프로필 열람 타입 구분 메서드
@@ -242,6 +251,7 @@ class ProfileSerializer(serializers.ModelSerializer):
                 "followers": f"{viewer_type}_can_see_follower_list",
                 "following": f"{viewer_type}_can_see_following_list",
                 "products": f"{viewer_type}_can_see_posts",
+                "posts": f"{viewer_type}_can_see_posts",
             }
 
             for field, setting in fields_to_check.items():
