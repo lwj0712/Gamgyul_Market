@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Count
+from django.db.models import Count, Q
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
@@ -34,7 +34,7 @@ class PostListView(generics.ListAPIView):
     @extend_schema(
         summary="게시물 목록 조회",
         description=(
-            "사용자가 팔로우한 사용자들의 최신 게시물을 가져옵니다. 팔로우한 사용자가 없을 경우, 인기 사용자의 게시물을 반환합니다."
+            "사용자가 팔로우한 사용자들과 본인의 최신 게시물을 가져옵니다. 팔로우한 사용자가 없을 경우, 본인과 인기 사용자의 게시물을 반환합니다."
         ),
         parameters=[
             OpenApiParameter(
@@ -115,19 +115,24 @@ class PostListView(generics.ListAPIView):
         user = self.request.user
 
         if user.is_authenticated:
+            """팔로우한 사용자 목록"""
             following_users = Follow.objects.filter(follower=user).values_list(
                 "following", flat=True
             )
 
+            """팔로우한 사용자의 게시물 + 본인이 작성한 게시물"""
             if following_users.exists():
-                posts = Post.objects.filter(user__in=following_users).order_by(
-                    "-created_at"
-                )
+                posts = Post.objects.filter(
+                    Q(user__in=following_users) | Q(user=user)
+                ).order_by("-created_at")
             else:
-                posts = Post.objects.none()
+                """팔로우한 사용자가 없으면 본인 게시물만 조회"""
+                posts = Post.objects.filter(user=user).order_by("-created_at")
         else:
+            """비로그인 상태에서는 게시물 없음"""
             posts = Post.objects.none()
 
+        """인기 사용자의 게시물 조회"""
         popular_users = User.objects.annotate(
             followers_count=Count("followers")
         ).order_by("-followers_count")[:10]
@@ -135,10 +140,10 @@ class PostListView(generics.ListAPIView):
 
         if user.is_authenticated:
             if not following_users.exists():
-                posts = popular_posts
-            else:
+                """팔로우한 사용자가 없으면 본인 게시물, 인기 사용자 게시물 조회"""
                 posts = posts | popular_posts
         else:
+            """비로그인 상태에서는 인기 사용자 게시물만 조회"""
             posts = popular_posts
 
         return posts.order_by("-created_at")
