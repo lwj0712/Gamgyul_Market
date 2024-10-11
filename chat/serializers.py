@@ -63,6 +63,7 @@ class MessageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(
         max_length=None, allow_empty_file=True, use_url=True, required=False
     )
+    sent_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.%fZ", read_only=True)
 
     class Meta:
         model = Message
