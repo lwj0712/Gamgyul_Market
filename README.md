@@ -23,6 +23,8 @@
 | 문지영  | ![문지영](이미지경로) | [@JiyoungMoon](https://github.com/whaehofk521) | insta           |
 | 박성재  | ![박성재](이미지경로) | [@HwangDal85](https://github.com/HwangDal85) | market           |
 
+프로젝트 기간 동안 휴일, 주말 빠짐 없이 모두 참여해 작업한 열정있고 책임감 있는 BE 개발자들로 구성되어 있습니다.
+
 <br>
 
 ## 2. 개발 목표
@@ -220,7 +222,7 @@
 
     <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
     <img src="https://img.shields.io/badge/django-092E20?style=for-the-badge&logo=django&logoColor=white">
-    <img src="https://img.shields.io/badge/DRF-333333?style=for-the-badge&logo=DRF&logoColor=white">
+    <img src="https://img.shields.io/badge/DJANGO-REST-ff1709?style=for-the-badge&logo=django&logoColor=white&color=ff1709&labelColor=gray">
 
 - 배포 환경:
 
