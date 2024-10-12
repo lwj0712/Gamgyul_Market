@@ -37,24 +37,29 @@ class TestPostAPI(APITestCase):
         )
 
         # 팔로우한 사용자 생성
-        self.followed_user = User.objects.create_user(
+        self.followed_user = User.objects.create_user(  # 여기서 정의
             username=f"followed_user_{uuid.uuid4()}",
             password="testpass",
             email="followed_user@example.com",
         )
         Follow.objects.create(follower=self.user, following=self.followed_user)
 
+        # 인기 사용자의 팔로워 생성
+        Follow.objects.create(follower=self.user, following=self.popular_user_1)
+        Follow.objects.create(follower=self.user, following=self.popular_user_2)
+
         # 인기 사용자 게시글 생성
-        popular_post_1 = Post.objects.create(
-            content="Popular post 1", user=self.popular_user_1
-        )
-        popular_post_2 = Post.objects.create(
-            content="Popular post 2", user=self.popular_user_2
+        Post.objects.create(content="Popular post 1", user=self.popular_user_1)
+        Post.objects.create(content="Popular post 2", user=self.popular_user_2)
+
+        # 생성된 게시물 ID 확인
+        popular_posts = Post.objects.filter(
+            user__in=[self.popular_user_1, self.popular_user_2]
         )
 
         # 팔로우한 사용자의 게시글 생성
         self.followed_post = Post.objects.create(
-            content="Followed post", user=self.followed_user
+            content="Followed post", user=self.user
         )
 
     def get_image_file(self):
@@ -126,6 +131,13 @@ class TestPostAPI(APITestCase):
         # 인증된 사용자는 있지만 팔로우한 사용자는 없는 상태
         self.client.force_authenticate(user=self.user)
 
+        popular_posts_count = Post.objects.filter(
+            user__in=[self.popular_user_1, self.popular_user_2]
+        ).count()
+        assert (
+            popular_posts_count > 0
+        ), "인기 게시물이 데이터베이스에 존재하지 않습니다."
+
         # 게시글 목록 조회 요청
         response = self.client.get(reverse("insta:insta_post_list"))
 
@@ -151,8 +163,6 @@ class TestPostAPI(APITestCase):
         popular_user = User.objects.create_user(
             username="popularuser", password="pass", email="popularuser@example.com"
         )
-        popular_user.followers_count = 100  # 인기 사용자를 위한 필드 설정
-        popular_user.save()
 
         post = Post.objects.create(user=popular_user, content="Post from popular user")
 
@@ -187,35 +197,9 @@ class TestPostAPI(APITestCase):
 class TestCommentAPI(TestPostAPI):
     def setUp(self):
         """테스트를 위한 APIClient 인스턴스 생성"""
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            username=f"testuser_{uuid.uuid4()}",
-            password="testpass",
-            email="testuser@example.com",
-        )
+        super().setUp()  # 부모 클래스의 setUp 메서드를 호출하여 사용자 및 게시물 생성
 
-        # 인기 사용자 생성
-        self.popular_user_1 = User.objects.create_user(
-            username=f"popular_user_1_{uuid.uuid4()}",
-            password="testpass",
-            email="popular_user_1@example.com",
-        )
-
-        self.popular_user_2 = User.objects.create_user(
-            username=f"popular_user_2_{uuid.uuid4()}",
-            password="testpass",
-            email="popular_user_2@example.com",
-        )
-
-        # 팔로우한 사용자 생성
-        self.followed_user = User.objects.create_user(
-            username=f"followed_user_{uuid.uuid4()}",
-            password="testpass",
-            email="followed_user@example.com",
-        )
-        Follow.objects.create(follower=self.user, following=self.followed_user)
-
-        # 게시글 생성
+        # 댓글을 달 게시물 생성
         self.comment_post = Post.objects.create(content="Test post", user=self.user)
 
         # 인기 사용자로부터 게시글 생성
@@ -258,31 +242,7 @@ class TestCommentAPI(TestPostAPI):
 class TestLikeAPI(TestPostAPI):
     def setUp(self):
         """테스트를 위한 APIClient 인스턴스 생성"""
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            username=f"testuser_{uuid.uuid4()}",
-            password="testpass",
-            email="testuser@example.com",
-        )
-        self.followed_user = User.objects.create_user(
-            username=f"followed_user_{uuid.uuid4()}",
-            password="password",
-            email="followed_user@example.com",
-        )
-        Follow.objects.create(follower=self.user, following=self.followed_user)
-
-        # 인기 사용자 생성
-        self.popular_user_1 = User.objects.create_user(
-            username=f"popular_user_1_{uuid.uuid4()}",
-            password="testpass",
-            email="popular_user_1@example.com",
-        )
-
-        self.popular_user_2 = User.objects.create_user(
-            username=f"popular_user_2_{uuid.uuid4()}",
-            password="testpass",
-            email="popular_user_2@example.com",
-        )
+        super().setUp()
 
         # 게시글 생성
         self.like_post = Post.objects.create(
@@ -290,8 +250,17 @@ class TestLikeAPI(TestPostAPI):
         )
 
         # 인기 사용자로부터 게시글 생성
-        Post.objects.create(content="Popular post 1", user=self.popular_user_1)
-        Post.objects.create(content="Popular post 2", user=self.popular_user_2)
+        self.popular_post_1 = Post.objects.create(
+            content="Popular post 1", user=self.popular_user_1
+        )
+        self.popular_post_2 = Post.objects.create(
+            content="Popular post 2", user=self.popular_user_2
+        )
+
+        # 팔로우한 사용자의 게시글 생성
+        self.followed_post = Post.objects.create(
+            content="Followed post", user=self.followed_user
+        )
 
     def test_like_post(self):
         """게시글 좋아요 테스트"""
