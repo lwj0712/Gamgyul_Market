@@ -48,7 +48,7 @@ class ReportCreateViewTestCase(APITestCase):
         """잘못된 content_type으로 신고 시도"""
         self.client.force_authenticate(user=self.user)
         invalid_payload = self.valid_payload.copy()
-        invalid_payload["content_type"] = "invalid"
+        invalid_payload["content_type"] = "invalid.model"  # 존재하지 않는 app_label
         response = self.client.post(self.url, invalid_payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Report.objects.count(), 0)
