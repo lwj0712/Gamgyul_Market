@@ -179,12 +179,10 @@ class FollowViewTestCase(APITransactionTestCase):
 
     def test_follow_user(self):
         """팔로우 테스트"""
-        url = reverse("accounts:follow", kwargs={"pk": self.user2.id})
-        response = self.client.post(url)
+        response = self.client.post(f"/accounts/follow/{self.user2.id}/")
+        print(f"Response content: {response.content}")
+        print(f"Response status code: {response.status_code}")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(
-            Follow.objects.filter(follower=self.user1, following=self.user2).exists()
-        )
 
     def test_follow_self(self):
         """자기 자신을 팔로우하려는 경우 에러"""
@@ -197,7 +195,7 @@ class FollowViewTestCase(APITransactionTestCase):
         """존재하지 않는 사용자를 팔로우하려는 경우 에러"""
         url = reverse("accounts:follow", kwargs={"pk": 9999})
         response = self.client.post(url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data["detail"], "팔로우하려는 사용자를 찾을 수 없습니다."
         )

@@ -313,7 +313,7 @@ class FollowView(generics.CreateAPIView):
                 "오류: 사용자를 찾을 수 없음",
                 value={"detail": "팔로우하려는 사용자를 찾을 수 없습니다."},
                 response_only=True,
-                status_codes=["400"],
+                status_codes=["404"],
             ),
             OpenApiExample(
                 "오류: 서버 오류",
@@ -343,23 +343,26 @@ class FollowView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            follow = Follow.objects.create(
+            follow, created = Follow.objects.get_or_create(
                 follower=request.user, following=following_user
             )
 
-            serializer = self.get_serializer(follow)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if created:
+                serializer = self.get_serializer(follow)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(
+                    {"detail": "이미 팔로우한 사용자입니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         except User.DoesNotExist:
             return Response(
                 {"detail": "팔로우하려는 사용자를 찾을 수 없습니다."},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_404_NOT_FOUND,
             )
-        except IntegrityError:
-            return Response(
-                {"detail": "이미 팔로우한 사용자입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        except ValidationError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response(
                 {"detail": f"팔로우 처리 중 오류가 발생했습니다: {str(e)}"},
