@@ -13,7 +13,7 @@ from drf_spectacular.utils import (
 )
 from drf_spectacular.types import OpenApiTypes
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Post, Comment, Like
+from .models import Post, Comment, Like, PostImage
 from accounts.models import Follow, User
 from config.pagination import LimitOffsetPagination, PageNumberPagination
 from .filters import PostFilter
@@ -285,7 +285,20 @@ class PostDetailView(generics.RetrieveUpdateAPIView):
         instance = serializer.instance
         if instance.user != self.request.user:
             raise PermissionDenied("글 작성자만 수정할 수 있습니다.")
+
         serializer.save()
+
+        existing_images = self.request.data.get("existing_images", None)
+
+        existing_images = self.request.data.get("existing_images", [])
+        new_images = self.request.data.getlist("images")
+
+        """새로운 이미지만 추가"""
+        for image_data in new_images:
+            if image_data:
+                PostImage.objects.create(post=instance, image=image_data)
+
+        return instance
 
 
 class PostDeleteView(generics.DestroyAPIView):

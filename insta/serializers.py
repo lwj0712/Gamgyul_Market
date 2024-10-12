@@ -139,10 +139,12 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
         if tags_data is not None:
             instance.tags.set(tags_data)
 
-        """이미지 수정"""
+        """이미지 추가 로직"""
         if validated_data.get("images"):
-            current_image_count = instance.uploaded_images.count()
-            if len(validated_data["images"]) + current_image_count > 10:
+            current_image_count = instance.images.count()
+            new_images_count = len(validated_data["images"])
+
+            if new_images_count + current_image_count > 10:
                 raise serializers.ValidationError(
                     "이미지는 10개까지 첨부할 수 있습니다."
                 )
