@@ -87,7 +87,7 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: | 
-        python manage.py test accounts.tests.test_views_account
-        python manage.py test accounts.tests.test_views_profile
-        python manage.py test accounts.tests.test_views_recommendation
-        python manage.py test
+        python manage.py test accounts.tests.test_views_account --keepdb --noinput
+        python manage.py test accounts.tests.test_views_profile --keepdb --noinput
+        python manage.py test accounts.tests.test_views_recommendation --keepdb --noinput
+        python manage.py test --keepdb --noinput
