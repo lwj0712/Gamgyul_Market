@@ -120,31 +120,30 @@ class PostListView(generics.ListAPIView):
                 "following", flat=True
             )
 
-            """팔로우한 사용자의 게시물 + 본인이 작성한 게시물"""
+            """팔로우한 사용자 및 본인이 작성한 게시물"""
             if following_users.exists():
                 posts = Post.objects.filter(
                     Q(user__in=following_users) | Q(user=user)
                 ).order_by("-created_at")
             else:
-                """팔로우한 사용자가 없으면 본인 게시물만 조회"""
+                """팔로우한 사용자가 없으면 본인 및 인기 사용자 게시물 조회"""
                 posts = Post.objects.filter(user=user).order_by("-created_at")
-        else:
-            """비로그인 상태에서는 게시물 없음"""
-            posts = Post.objects.none()
 
-        """인기 사용자의 게시물 조회"""
-        popular_users = User.objects.annotate(
-            followers_count=Count("followers")
-        ).order_by("-followers_count")[:10]
-        popular_posts = Post.objects.filter(user__in=popular_users)
+                """인기 사용자 게시물 조회"""
+                popular_users = User.objects.annotate(
+                    followers_count=Count("followers")
+                ).order_by("-followers_count")[:10]
+                popular_posts = Post.objects.filter(user__in=popular_users)
 
-        if user.is_authenticated:
-            if not following_users.exists():
-                """팔로우한 사용자가 없으면 본인 게시물, 인기 사용자 게시물 조회"""
+                """본인과 인기 사용자 게시물 통합"""
                 posts = posts | popular_posts
+
         else:
             """비로그인 상태에서는 인기 사용자 게시물만 조회"""
-            posts = popular_posts
+            popular_users = User.objects.annotate(
+                followers_count=Count("followers")
+            ).order_by("-followers_count")[:10]
+            posts = Post.objects.filter(user__in=popular_users)
 
         return posts.order_by("-created_at")
 
