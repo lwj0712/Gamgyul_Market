@@ -62,5 +62,8 @@ jobs:
         AWS_STORAGE_BUCKET_NAME: ${{ secrets.AWS_STORAGE_BUCKET_NAME }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
+      run: | 
+        python manage.py test accounts.tests.test_views_account
+        python manage.py test accounts.tests.test_views_profile
+        python manage.py test accounts.tests.test_views_recommendation
         python manage.py test
