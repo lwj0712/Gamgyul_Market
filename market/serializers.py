@@ -8,11 +8,20 @@ class ReviewSerializer(serializers.ModelSerializer):
     """
 
     user = serializers.ReadOnlyField(source="user.username")
+    user_id = serializers.ReadOnlyField(source="user.id")
     user_profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
-        fields = ["id", "user", "user_profile_image", "content", "rating", "created_at"]
+        fields = [
+            "id",
+            "user",
+            "user_id",
+            "user_profile_image",
+            "content",
+            "rating",
+            "created_at",
+        ]
 
     def get_user_profile_image(self, obj):
         request = self.context.get("request")
@@ -63,6 +72,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     average_rating = serializers.FloatField(read_only=True)
     username = serializers.SerializerMethodField()
+    user_id = serializers.ReadOnlyField(source="user.id")
     images = serializers.SerializerMethodField()
     reviews = ReviewSerializer(many=True, read_only=True)
     user_profile_image = serializers.SerializerMethodField()
@@ -73,6 +83,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "user",
+            "user_id",
             "username",
             "user_profile_image",
             "price",
