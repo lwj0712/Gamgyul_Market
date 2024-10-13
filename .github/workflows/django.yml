@@ -77,4 +77,7 @@ jobs:
 
     - name: Run Tests
       run: |
-        python manage.py test accounts.tests alarm chat insta market --keepdb --noinput || exit 1
+        python manage.py test accounts.tests.test_views_account --keepdb --noinput || exit 1
+        python manage.py test accounts.tests.test_views_profile --keepdb --noinput || exit 1
+        python manage.py test accounts.tests.test_views_recommendation --keepdb --noinput || exit 1
+        python manage.py test --keepdb --noinput || exit 1
