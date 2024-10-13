@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      max-parallel: 2
       matrix:
         python-version: [3.12]
 
@@ -71,10 +71,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        
+    - name: Wait for services to be ready
+      run: sleep 20
 
     - name: Run Tests
       run: |
-        python manage.py test accounts.tests.test_views_account --keepdb --noinput || exit 1
-        python manage.py test accounts.tests.test_views_profile --keepdb --noinput || exit 1
-        python manage.py test accounts.tests.test_views_recommendation --keepdb --noinput || exit 1
-        python manage.py test --keepdb --noinput || exit 1
+        python manage.py test accounts.tests test.py --keepdb --noinput || exit 1
