@@ -77,4 +77,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        python manage.py test accounts.tests test.py --keepdb --noinput || exit 1
+        python manage.py test accounts.tests alarm chat insta market --keepdb --noinput || exit 1
