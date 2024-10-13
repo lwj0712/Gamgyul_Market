@@ -14,8 +14,15 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # DEBUG를 환경 변수에서 가져옴 (기본값은 False)
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# ALLOWED_HOSTS를 환경 변수에서 가져옴
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS")
+# 환경 변수에서 ALLOWED_HOSTS를 가져와 리스트로 변환
+ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS", "52.79.210.209")]
+
+# 빈 문자열이 들어가지 않도록 처리
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
+# 만약 리스트가 비어있다면 기본값 설정
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["52.79.210.209"]
 
 INSTALLED_APPS = [
     # 3rd party apps
