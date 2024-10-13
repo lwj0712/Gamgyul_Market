@@ -77,7 +77,8 @@ class ProductSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     reviews = ReviewSerializer(many=True, read_only=True)
     user_profile_image = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True)
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True)
 
     class Meta:
         model = Product
