@@ -516,15 +516,39 @@ gantt
   </colgroup>
     <tbody>
         <tr>
-            <td>Market Product Update</td>
-            <td>Market Product Delete</td>
+            <td>login</td>
+            <td>signup</td>
         </tr>
         <tr>
             <td>
-		<img src="staticfiles/images/readme_img/Product-update.gif" width="100%"/>
+		<img src="staticfiles/images/readme_img/login.gif" width="100%"/>
             </td>
             <td>
-                <img src="staticfiles/images/readme_img/Product-delete.gif" width="100%"/>
+                <img src="staticfiles/images/readme_img/signup.gif" width="100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td>profile</td>
+            <td>profile-settings</td>
+        </tr>
+        <tr>
+           <td>
+                <img src="staticfiles/images/readme_img/follow.gif" width="100%"/>
+            </td>
+	     <td>
+                <img src="staticfiles/images/readme_img/profile-settings.png" width="100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td>chat</td>
+            <td>alarm</td>
+        </tr>
+        <tr>
+           <td>
+                <img src="staticfiles/images/readme_img/chat.gif" width="100%"/>
+            </td>
+	     <td>
+                <img src="staticfiles/images/readme_img/alarm.png" width="100%"/>
             </td>
         </tr>
         <tr>
