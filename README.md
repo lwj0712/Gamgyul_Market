@@ -1,10 +1,10 @@
 # 🍊 감귤하우스 
-<img src="static/images/readme_img/gamgyulhouse.png" width="100%"/>
+<img src="staticfiles/images/readme_img/gamgyulhouse.png" width="100%"/>
 
 <br>
 
 - 프로젝트 명 : Gamgyul House
-- 프로젝트 진행 기간 : 24.09.20 ~ 24.10.13
+- 프로젝트 진행 기간 : 24.09.20 ~ 24.10.14
 
 <br>
 
@@ -23,7 +23,7 @@
 | 문지영  | ![문지영](이미지경로) | [@JiyoungMoon](https://github.com/whaehofk521) | insta           |
 | 박성재  | ![박성재](이미지경로) | [@HwangDal85](https://github.com/HwangDal85) | market           |
 
-프로젝트 기간 동안 휴일, 주말 빠짐 없이 모두 참여해 작업한 열정있고 책임감 있는 BE 개발자들로 구성되어 있습니다.
+프로젝트 기간 동안 휴일, 주말 빠짐 없이 모두 참여해 작업한 열정있고 끈기있는 BE 개발자들로 구성되어 있습니다.
 
 <br>
 
@@ -227,6 +227,9 @@
 - 배포 환경:
 
     <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white">
+    <img src="https://img.shields.io/badge/Amazon EC2-FF9900?style=for-the-badge&logo=Amazon EC2&logoColor=white">
+    <img src="https://img.shields.io/badge/Amazon S3-569A31?style=for-the-badge&logo=Amazon S3&logoColor=white">
+
 
 - 협업 툴:
 
@@ -256,8 +259,8 @@ pw: 1234
 
 ### 6.1 API 문서
 
-- Swagger URL : http://localhost:8000/api/schema/swagger-ui/
-- Redoc URl : http://localhost:8000/api/schema/redoc/
+- Swagger URL : http://3.36.50.126/api/schema/swagger-ui/
+- Redoc URl : http://3.36.50.126/api/schema/redoc/
 
 <br>
 
@@ -423,14 +426,6 @@ pw: 1234
 ```
 </details>
 
-<details>
-    <summary><h4>📌 FE</h4></summary>
-
-```
-
-```
-</details>
-
 <br>
 
 ### 7.2 개발 일정
@@ -471,7 +466,7 @@ gantt
 <br>
 
 ## 8. ERD
-<img src="static/images/readme_img/ERD.png" width="100%"/>
+<img src="staticfiles/images/readme_img/ERD.png" width="100%"/>
 
 <h4>관계도 해설</h4>
 
