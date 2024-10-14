@@ -75,7 +75,7 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField(required=False)
     uploaded_images = PostImageSerializer(many=True, read_only=True)
     images = serializers.ListField(
-        child=serializers.ImageField(
+        child=serializers.URLField(
             max_length=255, allow_empty_file=False, use_url=False
         ),
         write_only=True,

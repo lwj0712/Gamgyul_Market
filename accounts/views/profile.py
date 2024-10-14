@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as filters
@@ -23,6 +22,7 @@ from accounts.serializers import (
 )
 from accounts.filters import ProfileFilter
 from accounts.models import Follow, PrivacySettings
+from config.s3_utils import upload_to_s3
 
 User = get_user_model()
 
@@ -131,6 +131,34 @@ class ProfileUpdateView(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         """부분 업데이트"""
         return super().partial_update(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        if "profile_image" in request.FILES:
+            profile_image = request.FILES["profile_image"]
+            image_id = str(uuid.uuid4())
+            object_name = f"profile_images/{instance.id}/{image_id}"
+
+            image_url = upload_to_s3(profile_image, object_name)
+
+            if image_url:
+                serializer.validated_data["profile_image"] = image_url
+            else:
+                return Response(
+                    {"error": "이미지 업로드에 실패했습니다."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        self.perform_update(serializer)
+
+        if getattr(instance, "_prefetched_objects_cache", None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 
 class PrivacySettingsView(generics.RetrieveUpdateAPIView):

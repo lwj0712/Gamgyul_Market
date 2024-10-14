@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q
 from rest_framework import generics, status, serializers
@@ -22,6 +23,7 @@ from .serializers import (
     CommentSerializer,
     LikeSerializer,
 )
+from config.s3_utils import upload_to_s3
 
 
 class PostListView(generics.ListAPIView):
@@ -217,12 +219,26 @@ class PostCreateView(generics.CreateAPIView):
         """게시물 작성 처리"""
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=self.request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            post = serializer.save(user=self.request.user)
 
-        return Response(
-            {"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
-        )
+            # 이미지 업로드 처리
+            uploaded_images = request.FILES.getlist("images")
+            for image in uploaded_images:
+                # S3에 이미지 업로드
+                object_name = f"post_images/{post.id}/{image.name}"
+                image = upload_to_s3(
+                    image, settings.AWS_STORAGE_BUCKET_NAME, object_name
+                )
+                if image:
+                    post.images.create(image=image)
+                else:
+                    return Response(
+                        {"error": "이미지 업로드에 실패했습니다."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostDetailView(generics.RetrieveUpdateAPIView):

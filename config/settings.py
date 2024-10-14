@@ -15,14 +15,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # 환경 변수에서 ALLOWED_HOSTS를 가져와 리스트로 변환
-ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS", "43.202.4.132")]
+ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS", "3.36.50.126")]
 
 # 빈 문자열이 들어가지 않도록 처리
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # 만약 리스트가 비어있다면 기본값 설정
 if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ["43.202.4.132"]
+    ALLOWED_HOSTS = ["3.36.50.126"]
 
 INSTALLED_APPS = [
     # 3rd party apps
@@ -212,10 +212,17 @@ SIMPLE_JWT = {
 }
 
 # CORS 설정 (환경 변수에서 가져오도록 수정)
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://3.36.50.126",  # 배포된 백엔드 서버 주소
+]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://3.36.50.126",  # 배포된 백엔드 서버 주소
+]
 
 # Crispy Forms 설정
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -251,7 +258,7 @@ SOCIALACCOUNT_PROVIDERS = {
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/login/callback/"
+GOOGLE_CALLBACK_URI = "http://3.36.50.126/accounts/google/login/callback/"
 
 # SMTP(Simple Mail Transfer ProtocoL) 설정
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -271,3 +278,9 @@ IMAGEKIT_CACHEFILE_DIR = "CACHE/images"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # 2주
 SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False
+
+# CSRF 설정
+CSRF_COOKIE_SECURE = False
+CSRF_USE_SESSIONS = True  # CSRF 토큰을 세션에 저장
+CSRF_COOKIE_SAMESITE = "Lax"

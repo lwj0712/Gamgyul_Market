@@ -20,20 +20,8 @@ class User(AbstractUser):
             "unique": "이미 사용 중인 사용자명입니다.",
         },
     )
-    profile_image = ProcessedImageField(
-        upload_to="profile_images/",
-        processors=[ResizeToFill(400, 400)],
-        format="JPEG",
-        options={"quality": 60},
-        null=True,
-        blank=True,
-    )
-    profile_image_thumbnail = ImageSpecField(
-        source="profile_image",
-        processors=[Thumbnail(100, 100)],
-        format="JPEG",
-        options={"quality": 60},
-    )
+    profile_image = models.URLField(max_length=1000)
+    profile_image_thumbnail = models.URLField(max_length=1000)
     bio = models.TextField(max_length=500, blank=True)
 
     USERNAME_FIELD = "email"
