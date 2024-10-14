@@ -18,10 +18,11 @@
 
 | 이름   | 사진  | 깃허브 주소               | 담당 파트            |
 |--------|-------|----------------------------|----------------------|
-| 김동규  | ![김동규](이미지경로) | [@Donggyu-Kim](https://github.com/Donggyu-Kim1) | accounts, report           |
-| 이원재  | ![이원재](이미지경로) | [@lwz7](https://github.com/lwj0712) | chat, alarm           |
-| 문지영  | ![문지영](이미지경로) | [@JiyoungMoon](https://github.com/whaehofk521) | insta           |
-| 박성재  | ![박성재](이미지경로) | [@HwangDal85](https://github.com/HwangDal85) | market           |
+| 김동규  | <img src="staticfiles/images/readme_img/4ab697eb411c7c6190bcf052058e33ac.jpg" alt="김동규" width="100"> | [@Donggyu-Kim](https://github.com/Donggyu-Kim1) | accounts, report, FE, 배포 |
+| 이원재  | <img src="staticfiles/images/readme_img/f-dd0sl.jpg" alt="이원재" width="100"> | [@lwz7](https://github.com/lwj0712) | chat, alarm, README 작성, 배포 |
+| 문지영  | <img src="staticfiles/images/readme_img/f0eec1f69968c087.png" alt="문지영" width="100"> | [@JiyoungMoon](https://github.com/whaehofk521) | insta, FE |
+| 박성재  | <img src="staticfiles/images/readme_img/008_.jpg" alt="박성재" width="100"> | [@HwangDal85](https://github.com/HwangDal85) | market, FE |
+
 
 프로젝트 기간 동안 휴일, 주말 빠짐 없이 모두 참여해 작업한 열정있고 끈기있는 BE 개발자들로 구성되어 있습니다.
 
@@ -31,7 +32,7 @@
 
 저희 감귤하우스 팀은 현대적이고 확장 가능한 SNS 및 사용자 간 직거래 플랫폼을 개발하는 것을 목표로 하고 있습니다. 주요 개발 목표는 다음과 같습니다.
 
-1. **Django Rest Framework(DRF)** 를 활용한 RESTful API 구현
+1. **Django Rest Framework(DRF)** 를 활용한 `RESTful API` 구현
    - 효율적이고 확장 가능한 백엔드 설계
    - API 버전 관리 및 문서화
 
@@ -39,16 +40,16 @@
    - 채팅 기능 및 실시간 알림 시스템 개발
    - 효율적인 서버-클라이언트 통신 구조 설계
 
-3. **JWT(JSON Web Token)** 를 이용한 사용자 인증 시스템 구축
+3. **사용자 인증 시스템** 구축
    - 안전하고 확장 가능한 사용자 인증 메커니즘 개발
    - 토큰 기반 인증과 세션 기반 인증의 장단점 이해
 
 4. **Class-Based Views(CBV)** 를 통한 CRUD 기능 구현
-   - 재사용 가능하고 유지보수가 용이한 view 로직 설계
-   - DRF의 generic views 활용 숙달
+   - 재사용 가능하고 유지보수가 용이한 `view` 로직 설계
+   - DRF의 `generic views` 활용 숙달
 
 5. **팀 협업 경험 축적**
-   - Git을 활용한 버전, 브랜치 관리 및 협업 워크플로우 확립
+   - `Git`을 활용한 버전, 브랜치 관리 및 협업 워크플로우 확립
    - 팀원끼리 부담없이 물어보고 도와주는 협업 문화 형성
 
 6. **AWS** 를 통한 클라우드 배포
@@ -60,11 +61,11 @@
 
 8. **Redis** 를 통한 효율적인 메모리 관리 및 실시간 기능 구현
    - 실시간 데이터 처리 최적화
-   - 채팅 기능을 위한 메시지 브로커로 Redis 활용
+   - 채팅 기능을 위한 메시지 브로커로 `Redis` 활용
    - 사용자 접속 상태 관리 및 실시간 알림 기능 구현
   
 9. **Daphne**를 활용한 ASGI 서버 구현
-   - Django Channels와 Daphne를 이용한 WebSocket 연결 관리
+   - `Django Channels`와 `Daphne`를 이용한 `WebSocket` 연결 관리
    - 비동기 처리를 통한 고성능 실시간 통신 구현
 
 10. 확장 가능한 **데이터베이스** 설계
@@ -106,7 +107,7 @@
 #### 📢 2. 실시간 알림 기능 (alarm 앱)
 
 2.1. 알림 생성
-- 사용자는 새로운 메시지, 팔로우, 댓글 등의 중요한 이벤트가 발생할 때 실시간 알림을 받습니다. 이 알림은 Django Channels와 WebSocket을 통해 실시간으로 전달됩니다.
+- 사용자는 새로운 메시지, 팔로우, 댓글 등의 중요한 이벤트가 발생할 때 실시간 알림을 받습니다. 이 알림은 `Django Channels`와 `WebSocket`을 통해 실시간으로 전달됩니다.
 
 2.2 메시지 알림
 - 새로운 메시지가 생성되면 알림을 생성합니다. 메시지 수신자가 WebSocket 연결 중인 상태(메시지가 생성된 채팅방에 접속해 있는 상태)라면 알림을 생성하지 않습니다.
@@ -174,7 +175,7 @@
 
 <br>
 
-## 4. 기술 스택 및 아키텍처
+## 4. 기술 스택
 
 ### 4.1 기술 스택
 <div align=left>
@@ -202,10 +203,6 @@
   <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
   <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
 </div>
-
-<br>
-
-### 4.2 아키텍처
 
 <br>
 
@@ -244,11 +241,8 @@
 - 테스트용 계정
 
 ```markdown
-[일반 유저]
-email: test@example.com
-pw: xptmxmdbwj123
-
 [관리자 유저]
+
 id: admin
 pw: 1234
 ```
@@ -312,11 +306,12 @@ pw: 1234
 | :-- | --- | --- | :-: | :-: | --- |
 | /posts/ | GET | 게시글 목록 조회 |  |  |  |
 | /posts/\<int:pk\>/ | GET | 게시글 상세 조회 |  |  |  |
+| /posts/\<int:pk\>/ | PATCH | 게시글 수정 | ✅ | ✅ |  |
 | /posts/create/ | POST | 게시글 작성 | ✅ |  |  |
 | /posts/\<int:pk\>/delete/ | DELETE | 게시글 삭제 | ✅ | ✅ |  |
 | /posts/\<int:post_id\>/comments/ | GET, POST | 게시글에 댓글 목록 조회 및 댓글 작성 | ✅ |  |  |
-| /comments/\<int:pk\>/ | GET | 댓글 상세 조회 | ✅ |  |  |
-| /posts/\<int:post_id\>/like/ | POST | 게시글 좋아요 | ✅ |  |  |
+| /posts/<int:post_id>/comments/<int:comment_id>/ | GET, PATCH, DELETE | 댓글 상세 조회, 수정, 삭제 | ✅ | ✅ |  |
+| /posts/\<int:post_id\>/like/ | POST, DELETE | 게시글 좋아요, 좋아요 취소 | ✅ | ✅ |  |
 | /posts/search/ | GET | 태그로 게시글 검색 |  |  |  |
 
 #### 🛒 market
@@ -471,18 +466,18 @@ gantt
 <h4>관계도 해설</h4>
 
 1. 사용자 관리:
-    - User 테이블이 중심이 되어 사용자의 기본 정보를 저장합니다.
-    - SocialAccount 테이블은 소셜 로그인 기능을 지원합니다.
-    - PrivacySettings 테이블로 사용자의 개인정보 공개 설정을 관리합니다.
-    - Follow 테이블로 사용자 간의 팔로우 관계를 표현합니다.
+    - `User` 테이블이 중심이 되어 사용자의 기본 정보를 저장합니다.
+    - `SocialAccount` 테이블은 소셜 로그인 기능을 지원합니다.
+    - `PrivacySettings` 테이블로 사용자의 개인정보 공개 설정을 관리합니다.
+    - `Follow` 테이블로 사용자 간의 팔로우 관계를 표현합니다.
 
 2. SNS 기능:
-    - Post, Comment, Like 테이블들로 게시물, 댓글, 좋아요 기능을 구현합니다.
-    - PostImage 테이블은 게시물에 여러 이미지를 첨부할 수 있게 합니다.
+    - `Post`, `Comment`, `Like` 테이블들로 게시물, 댓글, 좋아요 기능을 구현합니다.
+    - `PostImage` 테이블은 게시물에 여러 이미지를 첨부할 수 있게 합니다.
 
 3. 메시지 시스템:
-    - ChatRoom, Message 테이블은 사용자 간 채팅 기능을 제공합니다.
-    - WebSocketConnection 테이블은 실시간 통신을 관리합니다.
+    - `ChatRoom`, `Message` 테이블은 사용자 간 채팅 기능을 제공합니다.
+    - `WebSocketConnection` 테이블은 실시간 통신을 관리합니다.
         - 현재 사용자가 채팅방에 연결되어 있는지를 확인할 수 있습니다.
         - 채팅방에 연결되어 있는 상태라면 새로운 메시지를 읽음 처리합니다.
         - 채팅방에 연결되어 있는 상태라면 메시지 알림을 보내지 않습니다.
@@ -494,15 +489,15 @@ gantt
     - 내 게시물에 좋아요가 달렸을 때 알림
 
 5. Market 기능:
-    - Product 테이블은 판매 상품 정보를 저장합니다.
-    - ProductImage 테이블로 상품 이미지를 관리합니다.
-    - Review 테이블은 상품에 대한 리뷰를 저장합니다.
+    - `Product` 테이블은 판매 상품 정보를 저장합니다.
+    - `ProductImage` 테이블로 상품 이미지를 관리합니다.
+    - `Review` 테이블은 상품에 대한 리뷰를 저장합니다.
 
 6. 신고 시스템:
-    - Report 테이블로 부적절한 컨텐츠 신고를 관리합니다.
+    - `Report` 테이블로 부적절한 컨텐츠 신고를 관리합니다.
 
 7. 이미지 파일 관리:
-    - PostImage와 ProductImage를 분리함으로써, SNS 기능과 Market 기능 각각의 요구사항에 최적화된 방식으로 이미지를 관리합니다.
+    - `PostImage`와 `ProductImage`를 분리함으로써, SNS 기능과 Market 기능 각각의 요구사항에 최적화된 방식으로 이미지를 관리합니다.
 
 주요 관계:
 - 사용자(User)는 여러 게시물(Post), 댓글(Comment), 좋아요(Like), 상품(Product), 리뷰(Review)를 가질 수 있습니다.
@@ -512,11 +507,139 @@ gantt
 
 <br>
 
-## 9. 시연 영상
+## 9. 구현 화면
+
+<table border="1" style="width:100%;">
+  <colgroup>
+    <col style="width: 50%;">
+    <col style="width: 50%;">
+  </colgroup>
+    <tbody>
+        <tr>
+            <td>Market Product Update</td>
+            <td>Market Product Delete</td>
+        </tr>
+        <tr>
+            <td>
+		<img src="staticfiles/images/readme_img/Product-update.gif" width="100%"/>
+            </td>
+            <td>
+                <img src="staticfiles/images/readme_img/Product-delete.gif" width="100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Market Product List</td>
+            <td>Market Product Detail</td>
+        </tr>
+        <tr>
+           <td>
+                <img src="staticfiles/images/readme_img/Product-list.gif" width="100%"/>
+            </td>
+	     <td>
+                <img src="staticfiles/images/readme_img/Product-detail.gif" width="100%"/>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 <br>
 
 ## 10. 트러블 슈팅
+
+**1. 사진 크기 문제**
+
+- **문제 상황** : 프로필의 경우, 이미지 크기를 프론트에 알맞게 깨지지 않고 나와야 하는데 기존에 배웠던 유효성 검사 로직으로는 해결하기 어려웠습니다. 
+- **해결 방법** : `imagekit` 서드 파티를 사용하여 이미지 유효성 검사 로직 삭제를 할 수 있었고 알아서 프론트에서 리사이징이 될 수 있게 하여 작은 프로필 사진이나 큰 프로필 사진도 문제 없이 나오는 것을 확인할 수 있었습니다.
+
+
+**2. view 길이**
+
+- **문제 상황** : `accounts`의 `view`가 api 문서를 작성하다보니 길어져 가독성이 떨어지는 이슈가 있었습니다.
+- **해결 방법** : `views` 폴더를 만들고 그 안에 어떤 파트가 들어가 있는 지 구분할 수 있게 이름을 지었습니다.
+
+
+**3. 비활성화 계정 인증 문제**
+
+- **문제 상황** : 비활성화 계정의 경우, 장고 기본 세션 인증 메서드인 `authenticate`의 경우, `is_active` 값을 `false`로 지정할 시 아이디가 삭제되었다고 인식되었습니다. 
+- **해결 방법** : 이 기능을 사용하기 위해선 이 메서드를 수정할 필요가 있었습니다.settings에 커스텀 인증을 사용하기로 했고 `auth_backends.py`를 만들어 `username`이 있는지 없는지만으로 계정 존재 여부를 판단하고 `username`이 있음에도 `is_active=False`일 경우, 비활성화 유저로 반환하게 했습니다. 그러자 이메일 인증 단계에서 3가지 백엔드가 겹치는 에러가 발생했습니다. 백엔드가 겹치게 되면 클라이언트에서 어떤 값을 받아야 하는지 몰라 충돌이 나는 문제가 있었습니다. 그래서 백엔드 인증을 제가 만든 커스텀 인증으로 지정하여 충돌이 발생하지 않게 했습니다.
+
+
+**4. 유저 검색 view 테스트 중 발생한 에러**
+
+- **문제 상황** : 문제 해결을 위해 각 테스트 메서드가 실행된 후에 데이터베이스를 초기 상태로 롤백시키는 `APITransactionTestCase`를 사용했습니다. 하지만 그래도 해결되지 않자 print 문을 작성한 결과, json 응답 방식으로 받고 있었고 그래서 나온 값이 원하는 값이 아닌 key의 개수였습니다. 
+- **해결 방법** : 결국 출력해야 하는 값은 result의 개수이므로 count로 변경해서 해결했습니다. 이러한 변화가 발생한 이유는 `"DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",` 라는 drf 페이지네이션 설정을 바꾸면서 api 응답 데이터 구조가 바뀌었습니다. 그래서 count, next, previous, results 값을 반환해서 발생한 문제였습니다.  그 전에는 페이지네이션 적용을 안해서 2라는 숫자가 우연히 성공했던 거였습니다. 덕분에 응답 구조에 대해서 다시 한 번 공부하게 되는 계기가 되었습니다.
+
+
+**5. 팔로잉 팔로워 로직 문제**
+
+- **문제 상황** : 팔로잉 팔로워 로직이 제대로 구현되어 있지만 제대로 표현이 안되는 문제 발생했습니다. 데이터 베이스를 조회한 결과, 팔로워 아이디와 팔로잉하는 아이디가 매칭되는 시스템이었습니다. `follower_id`를 찾을 수 있을거라 생각해서 `follower_id`를 그대로 조회하게 되면 자신이 조회되어 버리는 상황이었습니다. 
+- **해결 방법** : 쿼리문을 통해 db를 조회했고 그 결과, `following_id`에 존재하는 id 값을 조회한 다음에 그에 해당하는 열에 있는 `follower_id`의 값을 조회해야 그 유저의 팔로워를 알 수 있다는 것을 찾아내 수정할 수 있었습니다.
+
+
+**6. DB migration 문제**
+
+- **문제 상황** : 저희 프로젝트는 요구사항에서 명시된 `postgres DB`를 무료로 사용 가능한 `supabase`를 사용하기로 선택했습니다. 개발을 진행해가면서 팀원들 각자의 환경에서 migration을 진행하면 DB 충돌 문제가 발생했고, 이를 해결하기 위해 DB를 초기화하거나, `fake migration`으로 충돌을 피하는 방법을 사용했습니다.  하지만 이 방법은 반복되는 작업이 많고 위험성이 높은 방법이라 다른 방법을 모색했습니다.
+- **해결 방법** : 테스트 / 개발 과정에서는 일관된 환경으로 DB 관리가 편리한 `docker`를 통해 `postgres DB`를 띄우는 방법으로 해결했습니다.
+
+**7. PostSerializer, 템플릿 파일 코드 오류**
+
+- **문제 상황** : 게시물에 이미지를 첨부했을 때 `admin`에서는 저장되나 템플릿에서는 저장되지 않는 상황
+- **해결 방법** : `PostSerializer`의 `to_representation` 메서드에 이미지의 URL을 추출하고 이를 리스트로 변환하게 설정. 템플릿의 url을 이미지의 url을 통해 접근 가능하게 함.
+
+**8. insta앱의 migration 파일 이슈**
+
+- **문제 상황** : 테스트가 진행이 되지 않고 `migrate`를 하라고 떴지만 실행 해도 아무런 변화 없음.
+- **해결 방법** : `docker-compose down`, migration 삭제 후 재설치 등 시도해 보았으나 migration 파일은 달라지지 않음. 이를 해결하기 위해 팀장님이 migration 파일들을 push 해주신 후,
+```
+git stash -> git pull origin main -> python manage.py makemigrations -> python manage.py migrate
+```
+순으로 시도해보았으나 실패. 그 뒤 아래의 코드를 순서대로 입력하여 해결
+
+```
+ docker-compose down -> docker-compose up -d -> python manage.py migrate
+``` 
+
+**7. 패키지 호환 문제**
+
+- **문제 상황** : PostgreSQL을 사용하기 위해 `psycopg2` 패키지를 설치했으나, `simplejwt` 패키지와 Django 버전이 호환되지 않는 문제가 발생. 또한, `django-allauth` 패키지에서 `AccountMiddleware`가 `settings.py`의 `MIDDLEWARE` 리스트에 포함되지 않아 에러가 발생. `requests` 모듈이 설치되지 않아 `ModuleNotFoundError`가 나타남.
+- **해결 방법** : `simplejwt` 패키지를 최신 버전으로 업데이트하고, `MIDDLEWARE` 리스트에 `AccountMiddleware`를 추가. 또한, `requests` 모듈을 설치하고, `STATICFILES_DIRS`에서 지정된 경로가 존재하지 않는 문제를 해결하기 위해 프로젝트 root 디렉토리에 `static` 폴더를 생성하여 해결.
+
+**8. 댓글이 두 번 생성되는 문제**
+
+- **문제 상황** : 댓글이 한 번에 두 개씩 생성되는 문제가 발생. 이는 `serializers`와 `view`에서 GET 방식으로 댓글을 중복 처리하여 발생한 문제.
+- **해결 방법** : `serializers`에서 review 부분을 삭제하여 댓글이 중복 생성되지 않도록 수정.
+
+**9. review 삭제 문제**
+
+- **문제 상황** : review를 삭제할 때 500 에러가 발생. 이는 `lookup_field`와 URL 인자가 일치하지 않아서 발생한 문제였음.
+- **해결 방법** : `lookup_field`와 URL 인자를 일치시켜 문제를 해결. 만약 URL에 동일한 이름의 인자가 여러 번 포함될 경우, 마지막 인자만 인식되므로 주의가 필요함.
+
+**10. 댓글 표시 방식 변경**
+
+- **문제 상황** : 처음에는 페이지 새로고침을 통해 댓글을 표시하는 방식이었으나, 이후 비동기 방식으로 변경한 후 CSRF 토큰 문제, 리다이렉트 처리 문제, 콘텐츠 타입 불일치 등의 에러가 발생.
+- **해결 방법** : `AJAX`를 사용하여 서버에 비동기 요청을 보내고, `JSON` 응답을 받아 `JavaScript`로 동적으로 페이지를 업데이트하는 방식으로 변경하여 문제를 해결.
+
+**11. 이미지 처리 문제**
+
+- **문제 상황** : 이미지 위치를 찾지 못하는 에러가 발생.
+- **해결 방법** : `urls.py`에 `media root` 패턴을 추가하여 이미지를 찾을 수 있도록 수정.
+
+**12. 댓글 삭제 에러 메시지 문제**
+
+- **문제 상황** : 댓글 삭제는 성공했으나, 삭제 실패 메시지가 계속해서 출력됨.
+- **해결 방법** : HTML에서 댓글을 렌더링하는 과정에서 `li` 요소에 ID가 없어서 DOM에서 댓글 ID를 찾지 못한 것이 원인. `li` 요소에 댓글 ID를 추가하여 문제를 해결.
+
+
+**13. 이미지 업로드 문제**
+
+- **문제 상황** : 모델과 `serializers`에서는 이미지 필드를 `image`로 변경했으나, HTML form에서 여전히 `image_url`로 지정되어 이미지가 저장되지 않는 문제가 발생.
+- **해결 방법** : HTML form에서도 필드 이름을 `image`로 수정하여 문제를 해결했습니다.
+
+**14. 배포 후 Fetch 에러**
+
+- **문제 상황** : 배포 후 API는 정상적으로 작동했으나, `CSRF` 인증이 제대로 작동하지 않아 `Fetch` 에러가 발생.
+
+
 
 <br>
 
@@ -524,10 +647,9 @@ gantt
 
 프로젝트의 일관성 유지와 협업 효율성을 높이기 위해 아래 컨벤션을 따릅니다.
 
-<br>
-
 ### 📌 Git 컨벤션
   
+<br>
 
 #### 커밋 메시지 구조
 커밋 메시지는 크게 두 부분으로 구성됩니다.
@@ -639,13 +761,19 @@ feature/<기능명>: 새로운 기능 개발을 위한 브랜치
 ## 12. 프로젝트를 마치며
 
 김동규
-> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+> 처음 팀장을 맡았을 때 그 역할을 수행할 수 있을지에 대한 의문과 걱정이 먼저 들었던 것 같습니다. 하지만, 책임감도 컸기에 노력하면서 처음 세팅부터 배포까지 백엔드와 프론트 개발 프로세스나 일정 관리 부분에 대해 많은 걸 배울 수 있었던 시간이었던 것 같습니다. 그리고 다른 분들의 코드를 보면서 다양한 장고의 기능들을 경험할 수 있었습니다. 저희 조는 특히 코드 부분에서 다사다난했음에도 불구하고 한 분도 포기하지 않고 끝까지 휴일, 주말, 저녁 시간에 참여하여 팀원분들이 정말 감사하고 저를 많이 도와주셔서 그 덕에 이 정도까지 왔다고 생각합니다. 계획치에 도달하지 못한 점이 아쉽긴 하지만 각자 노력하는 과정에 뿌듯함을 느꼈습니다.
 
 이원재
-> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+> - WebSocket을 활용한 실시간 통신을 구현하면서 연결 안정성을 확보하는 데 큰 어려움을 겪었지만 이를 해결하는 과정에서 경험과 노하우를 쌓을 수 있었습니다. 또한, CI/CD를 구축하며 자동화된 테스트와 배포의 중요성을 깊이 체감했습니다. 자동으로 테스트와 빌드를 실행해 에러를 조기에 발견함으로써 효율적인 개발 환경을 만드는 데 큰 도움이 되었습니다.
+>- 저희 프로젝트에서는 ViewSet의 추상성으로 인해 generic views를 사용하여 개발을 진행했습니다. 그러나 막바지에 팀원들과 코드를 통합하는 과정에서, ViewSet을 사용하는 것이 개발 속도와 코드의 일관성 유지 측면에서 많은 이점이 있다는 것을 알게 되었습니다.
+>- 이번 프로젝트를 통해 작업 기록의 중요성과 이를 공유하는 것의 가치를 실감했습니다. 팀원들과의 원활한 소통, 작업 분배, 그리고 배려가 얼마나 중요한지도 다시 한 번 깨달았습니다. 기술적인 부분만큼 사람 간의 소통도 프로젝트 성공에 중요한 요소라는 점을 배우는 귀중한 시간이었습니다. 이 경험이 앞으로의 커리어에 값진 자산이 될 것이라 생각합니다. 끝으로, 거의 한 달간 평일, 주말, 공휴일, 야간을 가리지 않고 함께 고생한 팀원들에게 깊은 감사를 전합니다.
 
 문지영
-> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+> 팀원분들과 처음하는 협업이라서 걱정이 많이 되었지만, 서로 북돋아주며 힘내자고 말할 때마다 팀원이 있다는 사실이 감사하게 느껴졌습니다. 난생 처음 직면하는 수많은 에러들을 겪으며 힘들지 않았다고 할 수는 없으나 팀원들과 모르는 것을 함께 공유하며 알아가고 해결해나가는 과정이 보다 값진 시간이었다고 생각합니다. 지난 4개월을 잊지 않고 앞으로 힘차게 나아가도록 노력하겠습니다. 다들 감사합니다.
 
 박성재
-> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+> 처음 시도하는 백엔드 개발이자, 처음 시도하는 Team Project이였습니다. 처음 겪는 에러가 많았습니다. 처음 겪는 실패도 많았습니다. 때로는 좌절하고, 때로는 절망하였습니다. 모두가 처음이었고, 모든 것이 처음이었습니다.
+그래도 우리는 포기하지 않았습니다. 우리는 새로운 코드를 배웠습니다. 우리는 새로운 기능을 배웠습니다. 우리는 역경을 헤치고, 한 걸음 한 걸음 나아갔습니다.
+좋은 배움의 기회였습니다. 앞으로 더 멋진 개발자의 발판이 되는 프로젝트가 되었으면 합니다!
+
+<br>
