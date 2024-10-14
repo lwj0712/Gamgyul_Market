@@ -15,14 +15,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # 환경 변수에서 ALLOWED_HOSTS를 가져와 리스트로 변환
-ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS", "52.79.210.209")]
+ALLOWED_HOSTS = [os.getenv("ALLOWED_HOSTS", "43.202.4.132")]
 
 # 빈 문자열이 들어가지 않도록 처리
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 # 만약 리스트가 비어있다면 기본값 설정
 if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ["52.79.210.209"]
+    ALLOWED_HOSTS = ["43.202.4.132"]
 
 INSTALLED_APPS = [
     # 3rd party apps
@@ -143,32 +143,22 @@ USE_I18N = True
 
 USE_TZ = True
 
-# S3 사용 설정
-USE_S3 = os.getenv("USE_S3") == "TRUE"
-# 공통 설정
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-if USE_S3:
-    # AWS Setting
-    AWS_REGION = os.getenv("AWS_REGION")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com"
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    # s3 static settings
-    STATIC_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-    STATICFILES_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
-    # s3 media settings
-    PUBLIC_MEDIA_LOCATION = "media"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    DEFAULT_FILE_STORAGE = "final_project.storage_backends.PublicMediaStorage"
-else:
-    STATIC_URL = "/static/"
-    MEDIA_URL = "/media/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# s3 설정
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+
+# 버킷이름.s3.AWS서버지역.amazonaws.com 형식
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com"
+
+# Media Setting
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/meida/"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
