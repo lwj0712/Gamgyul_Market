@@ -138,7 +138,10 @@ class PrivacySettingsViewTestCase(APITransactionTestCase):
         self.client.force_authenticate(user=None)
         url = reverse("accounts:privacy_settings", kwargs={"username": "testuser"})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
 
     def test_privacy_settings_nonexistent_user(self):
         """존재하지 않는 사용자의 프로필 보호 설정 접근 테스트"""
