@@ -212,10 +212,17 @@ SIMPLE_JWT = {
 }
 
 # CORS 설정 (환경 변수에서 가져오도록 수정)
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5500", "http://127.0.0.1:5500"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://3.36.50.126"  # 배포된 백엔드 서버 주소
+]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://3.36.50.126"  # 배포된 백엔드 서버 주소
+]
 
 # Crispy Forms 설정
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -271,3 +278,9 @@ IMAGEKIT_CACHEFILE_DIR = "CACHE/images"
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # 2주
 SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False
+
+# CSRF 설정
+CSRF_COOKIE_SECURE = False
+CSRF_USE_SESSIONS = True  # CSRF 토큰을 세션에 저장
+CSRF_COOKIE_SAMESITE = "Lax"
