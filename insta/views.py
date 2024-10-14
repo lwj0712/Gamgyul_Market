@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -406,9 +406,28 @@ class CommentListCreateView(generics.ListCreateAPIView):
         return Comment.objects.filter(post_id=post_id).order_by("-created_at")
 
     def perform_create(self, serializer):
-        """새 댓글 작성 시 현재 사용자 정보 추가"""
+        """새 댓글 또는 대댓글 작성 시 현재 사용자 정보 및 부모 댓글 정보 추가"""
         post_id = self.kwargs["post_id"]
-        serializer.save(user=self.request.user, post_id=post_id)
+        parent_comment_id = self.request.data.get("parent_comment", None)
+
+        # 부모 댓글이 있을 경우 대댓글 개수를 확인하고, 제한을 초과하면 예외 발생
+        if parent_comment_id:
+            parent_comment = Comment.objects.get(id=parent_comment_id)
+
+            # 대댓글 개수 제한 (예: 최대 3개)
+            reply_count = Comment.objects.filter(parent_comment=parent_comment).count()
+            if reply_count > 2:
+                raise serializers.ValidationError(
+                    "대댓글은 최대 2개까지 작성할 수 있습니다."
+                )
+
+            # 부모 댓글이 있을 경우, 대댓글로 저장
+            serializer.save(
+                user=self.request.user, post_id=post_id, parent_comment=parent_comment
+            )
+        else:
+            # 부모 댓글이 없을 경우, 일반 댓글로 저장
+            serializer.save(user=self.request.user, post_id=post_id)
 
 
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -444,7 +463,12 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
         """댓글 작성자만 삭제 가능"""
         if instance.user != self.request.user:
             raise PermissionDenied("댓글 작성자만 삭제할 수 있습니다.")
-        instance.delete()
+
+        # 대댓글까지 모두 삭제
+        replies = Comment.objects.filter(parent_comment=instance)
+        replies.delete()  # 대댓글 삭제
+
+        instance.delete()  # 부모 댓글 삭제
 
 
 class LikeView(generics.GenericAPIView):
@@ -543,6 +567,11 @@ class TagPostListView(generics.ListAPIView):
     def get_queryset(self):
         """태그를 기준으로 게시물 검색"""
         queryset = Post.objects.all()
+        tags = self.request.query.params.getlist("tags")
+
+        if tags:
+            queryset = queryset.filter(tags__name__in=tags).distinct()
+
         return queryset
 
     def get(self, request, *args, **kwargs):
@@ -559,7 +588,6 @@ class TagPostListView(generics.ListAPIView):
         filterset = PostFilter(self.request.GET, queryset=queryset)
 
         if filterset.is_valid():
-            print(f"필터링된 게시물 수: {filterset.qs.count()}")
             if filterset.qs.exists():
                 serializer = self.get_serializer(filterset.qs, many=True)
                 return Response(serializer.data)

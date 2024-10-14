@@ -18,7 +18,7 @@ urlpatterns = [
         name="insta_comment_list_create",
     ),
     path(
-        "comments/<int:pk>/",
+        "posts/<int:post_id>/comments/<int:comment_id>/",
         views.CommentDetailView.as_view(),
         name="insta_comment_detail",
     ),
