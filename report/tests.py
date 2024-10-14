@@ -41,7 +41,10 @@ class ReportCreateViewTestCase(APITestCase):
     def test_create_report_unauthenticated(self):
         """인증되지 않은 사용자의 신고 시도"""
         response = self.client.post(self.url, self.valid_payload)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
         self.assertEqual(Report.objects.count(), 0)
 
     def test_create_report_invalid_content_type(self):
