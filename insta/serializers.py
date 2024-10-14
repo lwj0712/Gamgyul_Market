@@ -46,6 +46,14 @@ class CommentSerializer(serializers.ModelSerializer):
             return CommentSerializer(replies, many=True).data
         return []
 
+    def validate(self, attrs):
+        """대댓글 작성 시 부모 댓글 유효성 검사"""
+        if "parent_comment" in attrs:
+            parent_comment = attrs["parent_comment"]
+            if not Comment.objects.filter(id=parent_comment.id).exists():
+                raise serializers.ValidationError("존재하지 않는 부모 댓글입니다.")
+        return attrs
+
 
 class LikeSerializer(serializers.ModelSerializer):
     """좋아요 모델의 serializer"""
