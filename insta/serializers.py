@@ -17,7 +17,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostImage
-        fields = ["id", "image"]
+        fields = ["id", "image_url"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -75,7 +75,7 @@ class PostSerializer(TaggitSerializer, serializers.ModelSerializer):
     tags = TagListSerializerField(required=False)
     uploaded_images = PostImageSerializer(many=True, read_only=True)
     images = serializers.ListField(
-        child=serializers.URLField(
+        child=serializers.ImageField(
             max_length=255, allow_empty_file=False, use_url=False
         ),
         write_only=True,

@@ -28,7 +28,7 @@ class PostImage(models.Model):
     """게시물 이미지 모델"""
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.URLField(max_length=1000)
+    image_url = models.URLField(max_length=1000)
 
     class Meta:
         ordering = ["post"]

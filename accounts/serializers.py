@@ -32,8 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
         write_only=True, required=True, validators=[validate_password]
     )
     social_accounts = SocialAccountSerializer(many=True, read_only=True)
-    profile_image = serializers.URLField(required=False, max_length=1000)
-    profile_image_thumbnail = serializers.URLField(required=False, max_length=1000)
+    profile_image_thumbnail = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
@@ -134,7 +133,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
     id = serializers.CharField(read_only=True)
     username = serializers.CharField(read_only=True)
-    profile_image = serializers.URLField(read_only=True)
+    profile_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
