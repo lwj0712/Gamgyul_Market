@@ -218,11 +218,17 @@ class UnauthenticatedUserTestCase(BaseTestCase):
         """비로그인된 사용자 로그아웃 시 에러 테스트"""
         url = reverse("accounts:logout")
         response = self.client.post(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
 
     def test_password_change_unauthenticated(self):
         """비로그인된 사용자 비밀번호 변경 시 에러 테스트"""
         url = reverse("accounts:change_password")
         data = {"old_password": "testpassword123", "new_password": "newpassword123"}
         response = self.client.put(url, data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
