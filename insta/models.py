@@ -28,7 +28,12 @@ class PostImage(models.Model):
     """게시물 이미지 모델"""
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image_url = models.URLField(max_length=1000)
+    image = ProcessedImageField(
+        upload_to="insta/",
+        processors=[ResizeToFit(1920, 1080)],
+        format="JPEG",
+        options={"quality": 90},
+    )
 
     class Meta:
         ordering = ["post"]

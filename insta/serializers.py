@@ -17,7 +17,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostImage
-        fields = ["id", "image_url"]
+        fields = ["id", "image"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
