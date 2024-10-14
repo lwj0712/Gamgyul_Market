@@ -536,7 +536,19 @@ gantt
                 <img src="staticfiles/images/readme_img/follow.gif" width="100%"/>
             </td>
 	     <td>
-                <img src="staticfiles/images/readme_img/profile-settings.png" width="100%"/>
+                <img src="staticfiles/images/readme_img/profile-settings_.png" width="100%"/>
+            </td>
+        </tr>
+        <tr>
+            <td>post-list</td>
+            <td>post-detail</td>
+        </tr>
+        <tr>
+           <td>
+                <img src="staticfiles/images/readme_img/post-list.PNG" width="100%"/>
+            </td>
+	     <td>
+                <img src="staticfiles/images/readme_img/post-detail.PNG" width="100%"/>
             </td>
         </tr>
         <tr>
@@ -548,7 +560,7 @@ gantt
                 <img src="staticfiles/images/readme_img/chat.gif" width="100%"/>
             </td>
 	     <td>
-                <img src="staticfiles/images/readme_img/alarm.png" width="100%"/>
+                <img src="staticfiles/images/readme_img/alarm_.png" width="100%"/>
             </td>
         </tr>
         <tr>
