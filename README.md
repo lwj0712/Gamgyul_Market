@@ -544,7 +544,7 @@ gantt
         </tr>
         <tr>
            <td>
-                <img src="staticfiles/images/readme_img/post-list.png" width="100%"/>
+                <img src="staticfiles/images/readme_img/post-lists.png" width="100%"/>
             </td>
 	     <td>
                 <img src="staticfiles/images/readme_img/post-detail.PNG" width="100%"/>
