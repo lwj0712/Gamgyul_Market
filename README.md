@@ -237,8 +237,7 @@
 
 ### 5.2 배포 URL
 
-- URL:
-- 테스트용 계정
+URL: http://3.36.50.126/admin/
 
 ```markdown
 [관리자 유저]
@@ -545,7 +544,7 @@ gantt
         </tr>
         <tr>
            <td>
-                <img src="staticfiles/images/readme_img/post-list.PNG" width="100%"/>
+                <img src="staticfiles/images/readme_img/post-list.png" width="100%"/>
             </td>
 	     <td>
                 <img src="staticfiles/images/readme_img/post-detail.PNG" width="100%"/>
